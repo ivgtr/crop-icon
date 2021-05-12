@@ -3,7 +3,7 @@ import type { query } from '../src/@types/Query.d'
 import { html } from '../src/html'
 import { createSVG } from '../src/svg'
 
-const CACHE_MAX_AGE = 60 * 60 * 2
+const CACHE_MAX_AGE = 60 * 60 * 24
 
 export default async (req: VercelRequest & { query: query }, res: VercelResponse) => {
   const { url, pattern, width, height } = req.query
@@ -11,7 +11,6 @@ export default async (req: VercelRequest & { query: query }, res: VercelResponse
   if (!url) {
     res.writeHead(200, {
       'Content-Type': 'text/html'
-      // 'Cache-Control': `public, max-age=${CACHE_MAX_AGE}`
     })
     return res.end(html())
   }
@@ -20,7 +19,7 @@ export default async (req: VercelRequest & { query: query }, res: VercelResponse
 
   res.writeHead(200, {
     'Content-Type': 'image/svg+xml',
-    'Cache-Control': `public, max-age=${CACHE_MAX_AGE}`
+    'Cache-Control': `public, max-age=${CACHE_MAX_AGE}, stale-while-revalidate`
   })
   return res.end(svg)
 }
