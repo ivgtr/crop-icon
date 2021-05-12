@@ -5,15 +5,10 @@ import h from './tag'
 
 const svgID = 'profile-icon'
 
-export const createSVG = async ({
-  url,
-  width,
-  height,
-  pattern = 'circle'
-}: query): Promise<string> => {
+export const createSVG = async ({ url, width, height, p = 'circle' }: query): Promise<string> => {
   const { content, ofset_w, ofset_h } = await createImageElement({ url })
 
-  const mask = createFilter(pattern)
+  const mask = createFilter(p, Number(width || ofset_w), Number(height || ofset_h))
 
   const element = h(
     'svg',

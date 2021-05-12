@@ -1,6 +1,6 @@
 <div align="center">
   <h3>
-    <img width="200" alt="profile icon" src="https://profile-icon.vercel.app/api?url=https://github.com/ivgtr.png">
+    <img width="200" alt="crop icon" src="https://profile-icon.vercel.app/api?url=https://github.com/ivgtr.png">
   </h3>
   <p align="center">Copy-paste this into your markdown content, and that's it. Simple!</p>
 </div>
@@ -14,22 +14,23 @@ Square icons are outdated, try transforming them!
 Change the `?url=` value to your want to cut image url.
 
 ```md
-[![badge](https://profile-icon.vercel.app/api?url=https://github.com/ivgtr.png)](https://profile-icon.vercel.app/api?url=https://github.com/ivgtr.png)
+[![icon](https://profile-icon.vercel.app/api?url=https://github.com/ivgtr.png)](https://github.com/ivgtr)
 ```
 
 ### Pattern
 
 `Future releases`
 
-More than just a `circle` will be supported.
+More than just a `circle` will be supported.  
+Currently supported: `circle` | `star`
 
 ```md
-[![badge](https://profile-icon.vercel.app/api?pattern=square&url=https://github.com/ivgtr.png)](https://profile-icon.vercel.app/api?pattern=square&url=https://github.com/ivgtr.png)
+[![icon](https://profile-icon.vercel.app/api?p=star&url=https://github.com/ivgtr.png)](https://github.com/ivgtr)
 ```
 
 ### Demo
 
-[https://profile-icon.vercel.app](https://profile-icon.vercel.app)
+[https://crop-icon.vercel.app](https://crop-icon.vercel.app)
 
 ## License
 

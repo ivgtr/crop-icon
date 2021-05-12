@@ -22,9 +22,17 @@ export const html = () => {
         {},
         s('.container', { maxWidth: '724px', margin: '0 auto 0' }),
         s('.flex', { display: 'flex' }),
-        s('.m-t', { marginTop: '30px' }),
+        s('.mt', { marginTop: '30px' }),
         s('.align-center', { alignItems: 'center' }),
         s('.justify-center', { justifyContent: 'center' }),
+        s('.mark', {
+          display: 'inline-block',
+          backgroundColor: '#4f5964',
+          color: '#cdd9e5',
+          padding: '0 5px',
+          fontSize: '0.9em'
+        }),
+        s('.link a:not(:first-child)', { marginLeft: '5px' }),
         s('.wrap', { height: '150px', width: '150px' }),
         s('.wrap img', { height: '100%', width: '100%', objectFit: 'contain' }),
         s('.arrow', {
@@ -45,7 +53,19 @@ export const html = () => {
         'div',
         { class: 'container' },
         h('h1', {}, 'This API will crop the icon in a nice way.'),
-        h('div', { class: 'm-t' }),
+        h(
+          'div',
+          { class: 'link' },
+          h(
+            'a',
+            {
+              href: 'https://github.com/ivgtr/crop-icon',
+              target: '_brank',
+              rel: 'noopener noreferrer'
+            },
+            'GitHub'
+          )
+        ),
         h(
           'p',
           {},
@@ -73,16 +93,63 @@ export const html = () => {
             'div',
             { class: 'wrap' },
             h('img', {
-              src: 'https://profile-icon.vercel.app/api?url=https://github.com/ivgtr.png'
+              src: '/api?url=https://github.com/ivgtr.png'
             })
           )
         ),
-        h('div', { class: 'm-t' }),
+        h('div', { class: 'mt' }),
         h('h4', {}, 'You can copy-paste this into markdown content.'),
         h(
           'p',
           {},
           `[![icon](https://profile-icon.vercel.app/api?url=https://github.com/ivgtr.png)](https://github.com/ivgtr)`
+        ),
+        h('div', { class: 'mt' }),
+        h('h4', {}, 'Cut the icon into various shapes.'),
+        h(
+          'div',
+          { class: 'wrap' },
+          h('img', {
+            src: '/api?p=star&url=https://github.com/ivgtr.png'
+          })
+        ),
+        h(
+          'p',
+          {},
+          'Support: ',
+          h('span', { class: 'mark' }, 'circle'),
+          ' | ',
+          h('span', { class: 'mark' }, 'star')
+        ),
+        h(
+          'p',
+          {},
+          `[![icon](https://profile-icon.vercel.app/api?p=star&url=https://github.com/ivgtr.png)](https://github.com/ivgtr)`
+        ),
+        h('div', { class: 'mt' }),
+        h(
+          'h3',
+          {},
+          'Give us a feedback via ',
+          h(
+            'a',
+            {
+              href: 'https://github.com/ivgtr/crop-icon',
+              target: '_brank',
+              rel: 'noopener noreferrer'
+            },
+            'GitHub'
+          ),
+          ' or ',
+          h(
+            'a',
+            {
+              href: 'https://twitter.com/ivgtr',
+              target: '_brank',
+              rel: 'noopener noreferrer'
+            },
+            'Twitter!.'
+          )
         )
       )
     )

@@ -1,6 +1,6 @@
 export type query = {
   url?: string
-  pattern?: 'circle' | 'square'
+  p?: 'circle' | 'star'
   width?: string
   height?: string
 }
