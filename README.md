@@ -5,6 +5,10 @@
   <p align="center">Copy-paste this into your markdown content, and that's it. Simple!</p>
 </div>
 
+---
+
+Square icons are outdated, try transforming them!
+
 ## Setup
 
 Change the `?url=` value to your want to cut image url.
@@ -22,6 +26,10 @@ More than just a `circle` will be supported.
 ```md
 [![badge](https://profile-icon.vercel.app/api?pattern=square&url=https://github.com/ivgtr.png)](https://profile-icon.vercel.app/api?pattern=square&url=https://github.com/ivgtr.png)
 ```
+
+### Demo
+
+[https://profile-icon.vercel.app](https://profile-icon.vercel.app)
 
 ## License
 
