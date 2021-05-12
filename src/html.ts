@@ -23,6 +23,7 @@ export const html = () => {
         s('.container', { maxWidth: '724px', margin: '0 auto 0' }),
         s('.flex', { display: 'flex' }),
         s('.mt', { marginTop: '30px' }),
+        s('.mb0', { marginBottom: '0' }),
         s('.align-center', { alignItems: 'center' }),
         s('.justify-center', { justifyContent: 'center' }),
         s('.mark', {
@@ -66,6 +67,7 @@ export const html = () => {
             'GitHub'
           )
         ),
+        h('h2', { class: 'mb0' }, 'Usage'),
         h(
           'p',
           {},
@@ -98,14 +100,14 @@ export const html = () => {
           )
         ),
         h('div', { class: 'mt' }),
-        h('h4', {}, 'You can copy-paste this into markdown content.'),
+        h('p', {}, 'You can copy-paste this into markdown content.'),
         h(
           'p',
           {},
           `[![icon](https://profile-icon.vercel.app/api?url=https://github.com/ivgtr.png)](https://github.com/ivgtr)`
         ),
         h('div', { class: 'mt' }),
-        h('h4', {}, 'Cut the icon into various shapes.'),
+        h('h3', {}, 'Cut the icon into various shapes.'),
         h(
           'div',
           { class: 'wrap' },
@@ -127,10 +129,11 @@ export const html = () => {
           `[![icon](https://profile-icon.vercel.app/api?p=star&url=https://github.com/ivgtr.png)](https://github.com/ivgtr)`
         ),
         h('div', { class: 'mt' }),
+        h('h2', { class: 'mb0' }, 'Supported'),
         h(
-          'h3',
+          'p',
           {},
-          'Give us a feedback via ',
+          'Please contanct ',
           h(
             'a',
             {
@@ -148,8 +151,9 @@ export const html = () => {
               target: '_brank',
               rel: 'noopener noreferrer'
             },
-            'Twitter!.'
-          )
+            'Twitter'
+          ),
+          '.'
         )
       )
     )

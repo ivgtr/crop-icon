@@ -21,7 +21,6 @@ Change the `?url=` value to your want to cut image url.
 
 `Future releases`
 
-More than just a `circle` will be supported.  
 Currently supported: `circle` | `star`
 
 ```md
