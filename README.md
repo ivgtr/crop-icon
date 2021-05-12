@@ -1,6 +1,6 @@
 <div align="center">
   <h3>
-    <img width="200" alt="crop icon" src="https://profile-icon.vercel.app/api?url=https://github.com/ivgtr.png">
+    <img width="200" alt="crop icon" src="https://crop-icon.vercel.app/api?url=https://github.com/ivgtr.png">
   </h3>
   <p align="center">Copy-paste this into your markdown content, and that's it. Simple!</p>
 </div>
@@ -14,7 +14,7 @@ Square icons are outdated, try transforming them!
 Change the `?url=` value to your want to cut image url.
 
 ```md
-[![icon](https://profile-icon.vercel.app/api?url=https://github.com/ivgtr.png)](https://github.com/ivgtr)
+[![icon](https://crop-icon.vercel.app/api?url=https://github.com/ivgtr.png)](https://github.com/ivgtr)
 ```
 
 ### Pattern
@@ -24,7 +24,7 @@ Change the `?url=` value to your want to cut image url.
 Currently supported: `circle` | `star`
 
 ```md
-[![icon](https://profile-icon.vercel.app/api?p=star&url=https://github.com/ivgtr.png)](https://github.com/ivgtr)
+[![icon](https://crop-icon.vercel.app/api?p=star&url=https://github.com/ivgtr.png)](https://github.com/ivgtr)
 ```
 
 ### Demo
