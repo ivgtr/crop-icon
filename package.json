@@ -7,7 +7,7 @@
     "start": "vercel dev"
   },
   "devDependencies": {
-    "@types/node": "^14.14.41",
+    "@types/node": "14.14.45",
     "eslint": "^7.24.0",
     "eslint-config-sumikko": "^1.0.0",
     "prettier": "^2.2.1",
