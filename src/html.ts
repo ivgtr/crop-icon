@@ -75,11 +75,11 @@ export const html = () => {
           h(
             'a',
             {
-              href: 'https://profile-icon.vercel.app/api?url=https://github.com/ivgtr.png',
+              href: 'https://crop-icon.vercel.app/api?url=https://github.com/ivgtr.png',
               target: '_brank',
               rel: 'noopener noreferrer'
             },
-            'https://profile-icon.vercel.app/api?url=https://github.com/ivgtr.png'
+            'https://crop-icon.vercel.app/api?url=https://github.com/ivgtr.png'
           )
         ),
         h(
@@ -104,7 +104,7 @@ export const html = () => {
         h(
           'p',
           {},
-          `[![icon](https://profile-icon.vercel.app/api?url=https://github.com/ivgtr.png)](https://github.com/ivgtr)`
+          `[![icon](https://crop-icon.vercel.app/api?url=https://github.com/ivgtr.png)](https://github.com/ivgtr)`
         ),
         h('div', { class: 'mt' }),
         h('h3', {}, 'Cut the icon into various shapes.'),
@@ -126,7 +126,7 @@ export const html = () => {
         h(
           'p',
           {},
-          `[![icon](https://profile-icon.vercel.app/api?p=star&url=https://github.com/ivgtr.png)](https://github.com/ivgtr)`
+          `[![icon](https://crop-icon.vercel.app/api?p=star&url=https://github.com/ivgtr.png)](https://github.com/ivgtr)`
         ),
         h('div', { class: 'mt' }),
         h('h2', { class: 'mb0' }, 'Supported'),
