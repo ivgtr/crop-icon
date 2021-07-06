@@ -112,7 +112,7 @@ export const html = () => {
           "div",
           { class: "wrap" },
           h("img", {
-            src: "/api?p=star&url=https://github.com/ivgtr.png",
+            src: "/api?p=hart&url=https://github.com/ivgtr.png",
           })
         ),
         h(
@@ -121,12 +121,14 @@ export const html = () => {
           "Support: ",
           h("span", { class: "mark" }, "circle"),
           " | ",
+          h("span", { class: "mark" }, "hart"),
+          " | ",
           h("span", { class: "mark" }, "star")
         ),
         h(
           "p",
           {},
-          `[![icon](https://crop-icon.vercel.app/api?p=star&url=https://github.com/ivgtr.png)](https://github.com/ivgtr)`
+          `[![icon](https://crop-icon.vercel.app/api?p=hart&url=https://github.com/ivgtr.png)](https://github.com/ivgtr)`
         ),
         h("div", { class: "mt" }),
         h("h2", { class: "mb0" }, "Supported"),

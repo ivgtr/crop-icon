@@ -21,10 +21,10 @@ Change the `?url=` value to your want to cut image url.
 
 `Future releases`
 
-Currently supported: `circle` | `star`
+Currently supported: `circle` | `hart` | `star`
 
 ```md
-[![icon](https://crop-icon.vercel.app/api?p=star&url=https://github.com/ivgtr.png)](https://github.com/ivgtr)
+[![icon](https://crop-icon.vercel.app/api?p=hart&url=https://github.com/ivgtr.png)](https://github.com/ivgtr)
 ```
 
 ### Demo
