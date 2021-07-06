@@ -3,11 +3,23 @@
   "version": "0.0.1",
   "main": "index.js",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ivgtr/crop-icon.git"
+  },
+  "homepage": "https://github.com/ivgtr/crop-icon#readme",
+  "bugs": {
+    "url": "https://github.com/ivgtr/crop-icon/issues"
+  },
+  "engines": {
+    "node": "14.x"
+  },
   "scripts": {
     "start": "vercel dev"
   },
   "devDependencies": {
-    "@types/node": "14.17.4",
+    "@types/node": "16.0.0",
+    "@vercel/node": "^1.11.1",
     "eslint": "7.30.0",
     "eslint-config-sumikko": "1.2.1",
     "prettier": "2.3.2",
@@ -15,7 +27,6 @@
     "vercel": "23.0.1"
   },
   "dependencies": {
-    "@vercel/node": "^1.9.1",
     "axios": "^0.21.1",
     "image-size": "^1.0.0"
   }

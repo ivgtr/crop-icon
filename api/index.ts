@@ -1,25 +1,30 @@
-import type { VercelRequest, VercelResponse } from '@vercel/node'
-import type { query } from '../src/@types/Query.d'
-import { html } from '../src/html'
-import { createSVG } from '../src/svg'
+import type { VercelRequest, VercelResponse } from "@vercel/node";
+import { cropImage } from "./_lib/cropImage";
+import { html } from "./_lib/html";
+import { Options, parseRequest } from "./_lib/perser";
 
-const CACHE_MAX_AGE = 60 * 60 * 24
+const CACHE_MAX_AGE = 60 * 60 * 24;
 
-export default async (req: VercelRequest & { query: query }, res: VercelResponse) => {
-  const { url, p, width, height } = req.query
-
-  if (!url) {
-    res.writeHead(200, {
-      'Content-Type': 'text/html'
-    })
-    return res.end(html())
+export default async (request: VercelRequest & { query: Options }, response: VercelResponse) => {
+  if (!request.query?.url) {
+    response.writeHead(200, {
+      "Content-Type": "text/html",
+    });
+    return response.end(html());
   }
+  try {
+    const options: Options = parseRequest(request.query);
 
-  const svg = await createSVG({ url, p, width, height })
+    const svg = await cropImage(options);
 
-  res.writeHead(200, {
-    'Content-Type': 'image/svg+xml',
-    'Cache-Control': `public, max-age=${CACHE_MAX_AGE}, stale-while-revalidate`
-  })
-  return res.end(svg)
-}
+    response.writeHead(200, {
+      "Content-Type": "image/svg+xml",
+      "Content-Length": svg.length,
+      "Cache-Control": `public, max-age=${CACHE_MAX_AGE}, stale-while-revalidate`,
+    });
+    return response.end(svg);
+  } catch {
+    response.writeHead(404);
+    return response.end();
+  }
+};

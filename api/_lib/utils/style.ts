@@ -4,14 +4,14 @@ export default function (
   ...children: string[]
 ): string {
   const camelToKebab = (str: string) =>
-    str.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`)
+    str.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`);
 
   const attrs = Object.entries(attributes).reduce(
     (acc, [k, v]) => `${acc} ${camelToKebab(k)}: ${v};`,
-    ''
-  )
+    ""
+  );
 
-  const close = `${children.join('')}`
+  const close = `${children.join("")}`;
 
-  return `${className} {${attrs}${close}}`
+  return `${className} {${attrs}${close}}`;
 }
