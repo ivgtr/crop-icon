@@ -19,7 +19,7 @@
   },
   "devDependencies": {
     "@types/node": "16.0.0",
-    "@vercel/node": "^1.11.1",
+    "@vercel/node": "1.11.1",
     "eslint": "7.30.0",
     "eslint-config-sumikko": "1.2.1",
     "prettier": "2.3.2",
