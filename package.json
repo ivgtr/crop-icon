@@ -18,7 +18,7 @@
     "start": "vercel dev"
   },
   "devDependencies": {
-    "@types/node": "16.11.9",
+    "@types/node": "16.11.10",
     "@vercel/node": "1.12.1",
     "@typescript-eslint/eslint-plugin": "5.3.0",
     "@typescript-eslint/parser": "5.3.0",
