@@ -30,7 +30,7 @@
     "vercel": "23.1.2"
   },
   "dependencies": {
-    "axios": "^0.25.0",
+    "axios": "^0.26.0",
     "image-size": "^1.0.0"
   }
 }
