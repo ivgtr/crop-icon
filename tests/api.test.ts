@@ -20,7 +20,9 @@ async function withServer(run: (base: string) => Promise<void>, load: (url: stri
 test('legacy /api without an image returns the editor, including HEAD semantics', () => withServer(async base => {
   const get = await fetch(base + '/api');
   assert.equal(get.status, 200); assert.match(get.headers.get('content-type') ?? '', /text\/html/);
-  const html = await get.text(); assert.match(html, /The cutting room/); assert.match(html, /studio-script/);
+  const html = await get.text();
+  assert.match(html, /<h2 id="preview-title"[^>]*>Preview<\/h2>/);
+  assert.match(html, /studio-script/);
   const head = await fetch(base + '/api', { method: 'HEAD' });
   assert.equal(head.status, 200); assert.equal(await head.text(), '');
   assert.equal(Number(head.headers.get('content-length')), Buffer.byteLength(html));
