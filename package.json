@@ -5,16 +5,17 @@
   "type": "module",
   "license": "MIT",
   "repository": { "type": "git", "url": "git+https://github.com/ivgtr/crop-icon.git" },
-  "engines": { "node": "22.x" },
+  "packageManager": "yarn@1.22.22",
+  "engines": { "node": "22.x", "yarn": "1.22.x" },
   "scripts": {
-    "start": "npm run dev",
-    "dev": "npm run build && node build/scripts/dev.js",
-    "build": "npm run generate:editor && tsc",
-    "vercel-build": "npm run build",
-    "typecheck": "npm run generate:editor && tsc --noEmit",
+    "start": "yarn run dev",
+    "dev": "yarn run build && node build/scripts/dev.js",
+    "build": "yarn run generate:editor && tsc",
+    "vercel-build": "yarn run build",
+    "typecheck": "yarn run generate:editor && tsc --noEmit",
     "generate:editor": "tsc -p tsconfig.editor.json && tsc -p tsconfig.tools.json && esbuild api/_lib/editor/index.ts --tsconfig=tsconfig.editor.json --bundle --platform=browser --format=iife --target=es2022 --charset=ascii --legal-comments=none --minify --outfile=build/editor.js --metafile=build/editor.meta.json && node build/scripts/build.js",
-    "test": "npm run build && node --test build/tests/*.test.js",
-    "check": "npm test"
+    "test": "yarn run build && node --test build/tests/*.test.js",
+    "check": "yarn run test"
   },
   "dependencies": { "image-size": "2.0.2" },
   "devDependencies": { "@types/node": "22.19.7", "typescript": "5.8.3", "esbuild": "0.25.12" }

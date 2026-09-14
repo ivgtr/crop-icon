@@ -17,14 +17,11 @@ jobs:
           node-version: 22
       - name: Install the declared dependencies and validate
         run: |
-          if [ -f yarn.lock ]; then
-            corepack enable
-            yarn install --frozen-lockfile --non-interactive
-            yarn check
-          else
-            npm ci
-            npm run check
-          fi
+          corepack enable
+          corepack prepare yarn@1.22.22 --activate
+          yarn install --frozen-lockfile --non-interactive --production=false
+          yarn run check
+          git diff --exit-code -- yarn.lock
       - name: Package the tested sources and build tools
         run: tar --exclude=.git -czf /tmp/validation-workspace.tar.gz .
       - uses: actions/upload-artifact@v4

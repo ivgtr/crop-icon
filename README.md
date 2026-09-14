@@ -64,15 +64,19 @@ The loader has no persistent source cache: loading and embedding later may use d
 
 ## Development
 
-Use Node.js 22. Every authored executable file (application, tooling and tests) is TypeScript.
+Use Node.js 22 and **Yarn Classic 1.22.22**, preserving the project's original Yarn toolchain. Every authored executable file (application, tooling and tests) is TypeScript.
 
 ```sh
-npm ci
-npm run dev
-npm run check
+corepack enable
+corepack prepare yarn@1.22.22 --activate
+yarn install --frozen-lockfile --non-interactive --production=false
+yarn run dev
+yarn run check
 ```
 
-`npm run check` builds both environments with strict TypeScript checks and then runs the emitted test suite. It fails on type errors; there is no JavaScript-only syntax-check path. Browser sources use DOM types without Node ambient types. Server, tooling and tests use Node types.
+`packageManager` pins Yarn; `yarn.lock` is the only dependency lockfile. Update dependencies with Yarn and commit its generated lockfile. Do not introduce another package manager or lockfile. CI and Vercel use the same frozen installation command, including build-time dependencies.
+
+`yarn run check` builds both environments with strict TypeScript checks and then runs the emitted test suite. Use **`yarn run check`**, not Yarn Classic's built-in `yarn check`. It fails on type errors; there is no JavaScript-only syntax-check path. Browser sources use DOM types without Node ambient types. Server, tooling and tests use Node types.
 
 ### One public entry point
 
@@ -103,11 +107,11 @@ The API hashes exactly the script and style strings it embeds for CSP. It does n
 
 `vercel.json` explicitly builds **only `api/index.ts` with `@vercel/node`**. It has no static builder or static output directory. The existing `/api` endpoint and the editor aliases rewrite to that single function. No browser asset endpoints or source-file routes are added. The development server delegates to the same handler and has no file-serving logic.
 
-The `vercel-build` hook runs the same `npm run build` pipeline before the Node function is traced, so the generated editor module exists when the handler is compiled. The ordinary API-folder builder does not execute a plain `build` script by itself. Do not replace this with an empty static output directory: Vercel's static builder rejects empty directories. No placeholder public files are needed.
+The `vercel-build` hook runs the same `yarn run build` pipeline before the Node function is traced, so the generated editor module exists when the handler is compiled. The ordinary API-folder builder does not execute a plain `build` script by itself. Do not replace this with an empty static output directory: Vercel's static builder rejects empty directories. No placeholder public files are needed.
 
-The explicit `builds` property is a supported legacy configuration chosen here to allowlist one function and prevent automatic static-file publishing. It must not be combined with `functions`. This tradeoff and the single-entry configuration are covered by tests.
+The explicit `builds` property is a supported legacy configuration chosen here to allowlist one function and prevent automatic static-file publishing. It must not be combined with `functions`. This tradeoff and the single-entry configuration are covered by tests. Dependency detection is based on the Yarn lockfile; the explicit installation command also uses Yarn rather than relying on an old dashboard override.
 
-Restart npm run dev after source changes to rebuild. Before merging, verify Vercel preview, remote GitHub avatars, the original README embed, downloads and target browsers. Offline tests are not a substitute for deployment verification.
+Restart `yarn run dev` after source changes to rebuild. Before merging, verify Vercel preview, remote GitHub avatars, the original README embed, downloads and target browsers. Unit tests and a successful build are not a substitute for deployment verification.
 
 ## License
 

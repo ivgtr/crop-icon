@@ -75,7 +75,7 @@ test('Vercel builds only the TypeScript API function without a static builder', 
   assert.equal(config.functions, undefined);
   assert.equal(config.buildCommand, undefined);
   const pkg = JSON.parse(readFileSync('package.json', 'utf8'));
-  assert.equal(pkg.scripts['vercel-build'], 'npm run build');
+  assert.equal(pkg.scripts['vercel-build'], 'yarn run build');
   for (const path of ['/', '/api', '/api/', '/index.html']) {
     assert.ok(config.rewrites.some((r: { source: string; destination: string }) => r.source === path && r.destination === '/api/index.ts'));
   }
@@ -90,4 +90,31 @@ test('all authored executable files are TypeScript and only api/index.ts is publ
   const pkg = JSON.parse(readFileSync('package.json', 'utf8'));
   assert.ok(pkg.scripts.test.includes('build/tests/*.test.js'));
   assert.doesNotMatch(readFileSync('scripts/dev.ts', 'utf8'), /readFile|createReadStream|public\//);
+});
+
+test('Yarn Classic is the only package manager and lockfile', () => {
+  const pkg = JSON.parse(readFileSync('package.json', 'utf8'));
+  assert.equal(pkg.packageManager, 'yarn@1.22.22');
+  assert.equal(pkg.engines.yarn, '1.22.x');
+  assert.match(readFileSync('yarn.lock', 'utf8'), /# yarn lockfile v1/);
+  assert.equal(existsSync('package-lock.json'), false);
+  for (const command of Object.values(pkg.scripts)) {
+    assert.equal(typeof command, 'string');
+    assert.doesNotMatch(String(command), /\b(?:npm|npx|pnpm)\b/);
+  }
+  // Yarn 1 has a built-in "check" command; use "yarn run check" for this project script.
+  assert.equal(pkg.scripts.check, 'yarn run test');
+});
+
+test('CI and Vercel use the same frozen Yarn install and TypeScript build', () => {
+  const config = JSON.parse(readFileSync('vercel.json', 'utf8'));
+  const install = 'yarn install --frozen-lockfile --non-interactive --production=false';
+  assert.equal(config.installCommand, install);
+  const workflow = readFileSync('.github/workflows/ci.yml', 'utf8');
+  assert.ok(workflow.includes(install));
+  assert.match(workflow, /cache: yarn/);
+  assert.match(workflow, /cache-dependency-path: yarn\.lock/);
+  assert.match(workflow, /run: yarn run check/);
+  assert.match(workflow, /git diff --exit-code -- yarn\.lock/);
+  assert.doesNotMatch(workflow, /\b(?:npm|npx|pnpm)\b/);
 });
