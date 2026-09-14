@@ -1,19 +1,9 @@
-import { MAX_ZOOM, MIN_ZOOM } from '../model.js';
-
 // Resolve and check each hook once. A missing or wrong tag fails early, not as an untyped cast.
 function element<T extends HTMLElement>(id: string, type: { new(): T }): T {
   const node = document.getElementById(id);
   if (!(node instanceof type)) throw new Error(`Missing or invalid editor element: ${id}`);
   return node;
 }
-
-function zoomInput(): HTMLInputElement {
-  const input = element('zoom', HTMLInputElement);
-  input.min = String(MIN_ZOOM);
-  input.max = String(MAX_ZOOM);
-  return input;
-}
-
 export const elements = {
   language: element('language', HTMLSelectElement),
   'source-form': element('source-form', HTMLFormElement),
@@ -23,7 +13,7 @@ export const elements = {
   width: element('width', HTMLInputElement),
   height: element('height', HTMLInputElement),
   fit: element('fit', HTMLSelectElement),
-  zoom: zoomInput(),
+  zoom: element('zoom', HTMLInputElement),
   x: element('x', HTMLInputElement),
   y: element('y', HTMLInputElement),
   border: element('border', HTMLInputElement),
