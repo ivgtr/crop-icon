@@ -261,7 +261,7 @@ $('download-png').addEventListener('click', async () => {
     canvas.height = settings.height;
     const context = canvas.getContext('2d');
     if (!context) throw new EditorError('canvasError');
-    context.drawImage(image, 0, 0);
+    context.drawImage(image, 0, 0, canvas.width, canvas.height);
     const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png'));
     if (!blob) throw new EditorError('pngError');
     download(blob, 'png'); status('pngDownloaded');
