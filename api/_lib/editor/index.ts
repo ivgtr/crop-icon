@@ -1,4 +1,7 @@
-import { MAX_BYTES, MAX_PIXELS, parseOptions, renderSvg, toQuery, validateUrl, escapeXml, isPattern, type Pattern, type Source, type Options } from '../core.js';
+import { MAX_BYTES, MAX_PIXELS, isPattern, type Pattern, type Source, type Options } from '../model.js';
+import { parseOptions, toQuery } from '../options.js';
+import { escapeXml, renderSvg } from '../renderer.js';
+import { validateUrl } from '../url.js';
 import { isLocale, translate, type MessageValues } from '../i18n.js';
 import type { MessageKey } from '../locales/en.js';
 import { localizeDocument, readLocale, saveLocale } from './i18n.js';
