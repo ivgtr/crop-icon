@@ -2,7 +2,25 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync, readdirSync } from 'node:fs';
 import { Script } from 'node:vm';
+import ts from 'typescript';
 import { inlineScript } from '../api/_lib/generated/editor.js';
+
+// Inspect syntax rather than UI strings such as "PNG export failed".
+function hasModuleSyntax(code: string): boolean {
+  const file = ts.createSourceFile('inline.js', code, ts.ScriptTarget.ES2022, true, ts.ScriptKind.JS);
+  let found = false;
+  function visit(node: ts.Node): void {
+    if (ts.isImportDeclaration(node) || ts.isExportDeclaration(node) || ts.isExportAssignment(node) ||
+        node.kind === ts.SyntaxKind.ExportKeyword ||
+        (ts.isCallExpression(node) && (node.expression.kind === ts.SyntaxKind.ImportKeyword ||
+          (ts.isIdentifier(node.expression) && node.expression.text === 'require')))) {
+      found = true;
+    }
+    ts.forEachChild(node, visit);
+  }
+  visit(file);
+  return found;
+}
 
 function sources(path: string): string[] {
   return readdirSync(path, { withFileTypes: true }).flatMap(entry => {
@@ -33,9 +51,23 @@ test('browser code is strict-checked with DOM types, server code has no DOM ambi
 test('compiled editor is one self-contained, HTML-safe executable script', () => {
   assert.ok(inlineScript.length > 1000);
   assert.doesNotThrow(() => new Script(inlineScript));
-  assert.doesNotMatch(inlineScript, /<\/script|<!--|\bimport\s*\(|\bexport\s|sourceMappingURL|require\(/i);
+  assert.doesNotMatch(inlineScript, /<\/script|<!--|sourceMappingURL/i);
+  assert.equal(hasModuleSyntax(inlineScript), false);
   assert.doesNotMatch(inlineScript, /node:|loadRemote|node_modules|\/app\.js|\/core\.js/);
 });
+test('module syntax checks ignore prose but reject actual module dependencies', () => {
+  assert.equal(hasModuleSyntax('throw new Error("PNG export failed. Try a smaller output size.");'), false);
+  assert.equal(hasModuleSyntax('const message = "import(...) and require(...)";'), false);
+  for (const code of [
+    'import value from "./asset.js";',
+    'export const value = 1;',
+    'export { value } from "./asset.js";',
+    'export default 1;',
+    'import("./asset.js");',
+    'require("./asset.js");',
+  ]) assert.equal(hasModuleSyntax(code), true, code);
+});
+
 test('Vercel static output is empty and cannot expose compiled server modules', () => {
   const config = JSON.parse(readFileSync('vercel.json', 'utf8'));
   assert.equal(config.outputDirectory, 'build/static');
@@ -45,6 +77,7 @@ test('Vercel static output is empty and cannot expose compiled server modules', 
   for (const path of ['/', '/index.html']) assert.ok(config.rewrites.some((r: { source: string; destination: string }) => r.source === path && r.destination === '/api'));
 });
 
+// Include build/dev scripts and tests: moving only the runtime would leave unchecked JS.
 test('all authored executable files are TypeScript and only api/index.ts is public', () => {
   for (const dir of ['api', 'scripts', 'tests']) {
     for (const file of sources(dir)) assert.ok(file.endsWith('.ts'), file);
