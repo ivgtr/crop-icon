@@ -5,4 +5,6 @@ build/
 !.env.example
 .DS_Store
 test-results/
+test-results-preview/
+playwright-report/
 api/_lib/generated/

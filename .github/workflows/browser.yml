@@ -1,6 +1,12 @@
 name: Browser verification
 on:
   pull_request:
+  workflow_dispatch:
+    inputs:
+      preview_url:
+        description: Optional deployed preview URL to test in addition to the local handler
+        type: string
+        required: false
 permissions:
   contents: read
 concurrency:
@@ -17,31 +23,28 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
+          cache: yarn
       - name: Use Yarn Classic
         run: |
           corepack enable
           corepack prepare yarn@1.22.22 --activate
-      - name: Resolve the newly added browser dependency
-        run: |
-          yarn install --non-interactive --production=false
-          echo BEGIN_BROWSER_LOCK
-          cat yarn.lock
-          echo END_BROWSER_LOCK
+      - run: yarn install --frozen-lockfile --non-interactive --production=false
       - run: yarn run check
-      - run: yarn exec playwright install --with-deps chromium
+      - run: yarn run playwright install --with-deps chromium
       - name: Browser tests against the production handler
         run: yarn run test:e2e
-      - name: Browser tests against Vercel Preview
-        if: always()
+      - name: Browser tests against the requested deployment
+        if: inputs.preview_url != ''
         env:
-          E2E_BASE_URL: https://crop-icon-git-refactor-crop-icon-studio-ivgtrs-projects.vercel.app
+          E2E_BASE_URL: ${{ inputs.preview_url }}
         run: yarn run test:e2e --output=test-results-preview --reporter=list
+      - name: Verify the lockfile was not modified
+        run: git diff --exit-code -- yarn.lock
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: browser-verification
           path: |
-            yarn.lock
             playwright-report
             test-results
             test-results-preview
