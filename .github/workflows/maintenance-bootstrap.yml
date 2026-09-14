@@ -1,0 +1,40 @@
+name: Maintenance bootstrap
+on:
+  push:
+    branches: [refactor/crop-icon-maintenance]
+    paths: [.github/workflows/maintenance-bootstrap.yml]
+permissions:
+  contents: read
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - name: Inspect stable releases
+        run: |
+          node --version
+          npm --version
+          for package in npm pnpm typescript esbuild @playwright/test @types/node @vercel/node image-size; do
+            echo "=== $package ==="
+            npm view "$package@latest" version engines --json
+          done
+      - name: Prepare a dependency snapshot for verification
+        run: |
+          npm install --global npm@latest
+          npm pkg delete packageManager engines.yarn
+          npm pkg set engines.node=24.x
+          npm install --save-dev --save-exact typescript@latest esbuild@latest @playwright/test@latest @types/node@24
+          npm ls --depth=0
+          npm audit --json > dependency-audit.json || test "$?" = 1
+          tar --exclude=.git --exclude=.github/workflows/maintenance-bootstrap.yml -czf /tmp/maintenance-snapshot.tar.gz .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: maintenance-snapshot
+          path: /tmp/maintenance-snapshot.tar.gz
+          retention-days: 1
