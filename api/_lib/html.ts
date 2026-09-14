@@ -1,6 +1,6 @@
 import s from "./utils/style.js";
 import h, { text } from "./utils/tag.js";
-import { PATTERNS, shapeMarkup } from "./core.js";
+import { MAX_ZOOM, MIN_ZOOM, PATTERNS, shapeMarkup } from "./core.js";
 import { en, type MessageKey } from "./locales/en.js";
 import { inlineScript } from "./generated/editor.js";
 
@@ -153,7 +153,7 @@ function controls(): string {
         h("div", { class: "two-columns" }, field("width", "width"), field("height", "height")),
         h("label", { class: "select-row", for: "fit" }, message("fit"),
           h("select", { id: "fit", name: "fit" }, message("cover", "option", { value: "cover" }), message("contain", "option", { value: "contain" }))),
-        range("zoom", "zoom", 1, 4, 1, "×", .05),
+        range("zoom", "zoom", MIN_ZOOM, MAX_ZOOM, 1, "×", .05),
         range("x", "horizontal", 0, 100, 50, "%"),
         range("y", "vertical", 0, 100, 50, "%"),
         message("positionHint", "p", { class: "hint" }),
