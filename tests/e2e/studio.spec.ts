@@ -1,6 +1,6 @@
 import { test, expect, type Page } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
-import { PNG, JPEG, GIF, WEBP } from '../fixtures.js';
+import { PNG, JPEG, GIF, WEBP, PROGRESSIVE_JPEG, LOSSLESS_WEBP, ALPHA_WEBP, ANIMATED_WEBP, ROTATED_JPEG } from '../fixtures.js';
 
 async function openStudio(page: Page): Promise<void> {
   const response = await page.goto('/');
@@ -48,7 +48,9 @@ test('local raster edits export real SVG and PNG without uploading', async ({ pa
   page.on('request', request => { if (/^https?:/.test(request.url())) network.push(request.url()); });
   for (const [name, mimeType, buffer] of [
     ['fixture.png', 'image/png', PNG], ['fixture.jpg', 'image/jpeg', JPEG],
-    ['fixture.gif', 'image/gif', GIF], ['fixture.webp', 'image/webp', WEBP],
+    ['fixture.gif', 'image/gif', GIF], ['progressive.jpg', 'image/jpeg', PROGRESSIVE_JPEG],
+    ['lossless.webp', 'image/webp', LOSSLESS_WEBP], ['alpha.webp', 'image/webp', ALPHA_WEBP],
+    ['animated.webp', 'image/webp', ANIMATED_WEBP], ['fixture.webp', 'image/webp', WEBP],
   ] as const) {
     await page.locator('#file').setInputFiles({ name, mimeType, buffer });
     await expect(page.locator('#privacy')).toContainText(`${name} · on-device, never uploaded`);
@@ -104,13 +106,13 @@ test('public GitHub image, live embeds and edit links work end to end', async ({
   await expect(page.locator('#copy-url')).toBeEnabled();
   await page.locator('#width').fill('128');
   await page.locator('#height').fill('128');
-  await page.locator('#shapes button[data-pattern="hart"]').click();
+  await page.locator('#shapes button[data-pattern="heart"]').click();
   await expect(page.locator('#dimensions')).toHaveText('128 × 128');
   await expect(page.locator('#shape-label')).toHaveText('Heart');
   await page.locator('#copy-url').click();
   const live = await page.evaluate(() => navigator.clipboard.readText());
   expect(new URL(live).origin).toBe(new URL(baseURL!).origin);
-  expect(new URL(live).searchParams.get('p')).toBe('hart');
+  expect(new URL(live).searchParams.get('p')).toBe('heart');
   const image = await page.request.get(live);
   expect(image.status()).toBe(200);
   expect(image.headers()['content-type']).toContain('image/svg+xml');
@@ -121,7 +123,7 @@ test('public GitHub image, live embeds and edit links work end to end', async ({
   expect(await page.evaluate(() => navigator.clipboard.readText())).toContain('<img src=');
   await page.locator('#copy-editor').click();
   const edit = await page.evaluate(() => navigator.clipboard.readText());
-  expect(new URL(edit).hash).toContain('p=hart');
+  expect(new URL(edit).hash).toContain('p=heart');
   const shared = await context.newPage();
   await shared.goto(edit);
   await expect(shared.locator('#status')).toContainText('Ready.', { timeout: 20000 });
@@ -140,4 +142,11 @@ test('entry aliases work and internal files are not publicly served', async ({ r
   for (const path of ['/app.js', '/core.js', '/public/app.js', '/api/_lib/editor/index.ts', '/build/api/index.js']) {
     expect((await request.get(path)).status(), path).toBe(404);
   }
+});
+
+test('JPEG EXIF dimensions agree with the browser', async ({ page }) => {
+  await openStudio(page);
+  await page.locator('#file').setInputFiles({ name: 'rotated.jpg', mimeType: 'image/jpeg', buffer: ROTATED_JPEG });
+  await expect(page.locator('#source-info')).toContainText('16 × 32');
+  await expect(page.locator('#download-png')).toBeEnabled();
 });

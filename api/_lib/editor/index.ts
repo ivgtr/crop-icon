@@ -3,7 +3,7 @@ import { elements } from './elements.js';
 
 const $ = <K extends keyof typeof elements>(id: K): (typeof elements)[K] => elements[id];
 const errorMessage = (error: unknown): string => error instanceof Error ? error.message : 'An unexpected editor error occurred.';
-const label = (p: Pattern) => p === 'hart' || p === 'heart' ? 'Heart' : p[0].toUpperCase() + p.slice(1);
+const label = (p: Pattern) => p[0].toUpperCase() + p.slice(1);
 let pattern: Pattern = 'circle';
 let source: Source | null = null;
 let remoteUrl = '';
@@ -50,7 +50,7 @@ function options(): Options & { width: number; height: number } {
 function render() {
   frame = 0;
   for (const [key, suffix] of [['zoom', '×'], ['x', '%'], ['y', '%'], ['border', ' px']] as const) $(`${key}-value` as const).value = $(key).value + suffix;
-  for (const button of $('shapes').querySelectorAll<HTMLButtonElement>('button[data-pattern]')) button.setAttribute('aria-pressed', String(button.dataset.pattern === (pattern === 'heart' ? 'hart' : pattern)));
+  for (const button of $('shapes').querySelectorAll<HTMLButtonElement>('button[data-pattern]')) button.setAttribute('aria-pressed', String(button.dataset.pattern === pattern));
   $('bg').disabled = $('transparent').checked;
   if (!source || pending) return;
   try {

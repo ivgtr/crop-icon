@@ -20,10 +20,10 @@ test('legacy width and height independently override natural source dimensions',
 test('legacy star keeps original self-intersecting polygon coordinates', () => {
   assert.match(shapeMarkup('star', 320, 200), /points="160,0 60,200 320,67 0,67 260,200"/);
 });
-test('legacy hart preserves its width-based geometry; heart is an exact alias', () => {
-  assert.equal(shapeMarkup('heart', 320, 200), shapeMarkup('hart', 320, 200));
-  assert.match(shapeMarkup('hart', 320, 200), /M32,96 A64,64,0,0,1,160,96/);
-  assert.match(shapeMarkup('hart', 320, 200), /160,288/);
+test('heart preserves its width-based geometry without accepting the old typo', () => {
+  assert.throws(() => parseOptions({ ...base, p: 'hart' }), /Unknown shape/);
+  assert.match(shapeMarkup('heart', 320, 200), /M32,96 A64,64,0,0,1,160,96/);
+  assert.match(shapeMarkup('heart', 320, 200), /160,288/);
 });
 test('legacy non-square circle uses SVG normalized-diagonal radius', () => {
   const radius = Number(shapeMarkup('circle', 320, 200).match(/r="([^"]+)"/)?.[1]);

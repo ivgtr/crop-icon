@@ -115,7 +115,7 @@ export const inlineStyles = [
   ),
 ].join("\n");
 
-const shapeLabel = (pattern: string) => pattern === "hart" ? "Heart" : pattern[0].toUpperCase() + pattern.slice(1);
+const shapeLabel = (pattern: string) => pattern[0].toUpperCase() + pattern.slice(1);
 const button = (id: string, label: string, disabled = false, className = "") =>
   h("button", { id, type: "button", disabled, class: className || undefined }, text(label));
 const heading = (number: string, label: string) => h("h2", {}, h("span", {}, number), text(label));
@@ -197,9 +197,9 @@ function usage(): string {
     h("summary", {}, "Usage · the original API still works"),
     h("p", {}, "Copy-paste this into your markdown content, and that's it. Simple!"),
     h("pre", {}, h("code", {}, text(`[![icon](${sample})](https://github.com/ivgtr)`))),
-    h("div", { class: "api-examples" }, ...["circle", "hart", "star"].map(pattern =>
+    h("div", { class: "api-examples" }, ...["circle", "heart", "star"].map(pattern =>
       h("a", { class: "mark", href: `/api?p=${pattern}&url=https://github.com/ivgtr.png`, target: "_blank", rel: "noopener noreferrer" }, pattern))),
-    h("p", {}, "Change ", h("code", {}, "url"), " to your image URL. ", h("code", {}, "p=circle|hart|star"),
+    h("p", {}, "Change ", h("code", {}, "url"), " to your image URL. ", h("code", {}, "p=circle|heart|star"),
       ", width and height keep working. Existing URLs retain natural dimensions and centered contain fit; new controls are optional."),
     h("p", {}, "Embeds refresh through a 24-hour cache. SVG retains the entire embedded source, including hidden pixels and metadata; do not use it for redaction. PNG is a visible, single-frame snapshot."));
 }

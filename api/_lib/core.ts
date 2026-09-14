@@ -1,5 +1,5 @@
 // One typed renderer for the browser and API. No DOM, network, or platform dependencies.
-export type Pattern = 'circle' | 'hart' | 'heart' | 'star' | 'square' | 'rounded' | 'squircle' | 'hexagon' | 'diamond' | 'shield' | 'ticket' | 'flower';
+export type Pattern = typeof PATTERNS[number];
 export interface Options {
   url: string;
   pattern: Pattern;
@@ -17,11 +17,11 @@ export interface Source { data: string; width: number; height: number }
 const XML_ENTITIES: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&apos;' };
 
 export const PATTERNS = [
-  'circle', 'hart', 'star', 'square', 'rounded', 'squircle',
+  'circle', 'heart', 'star', 'square', 'rounded', 'squircle',
   'hexagon', 'diamond', 'shield', 'ticket', 'flower',
 ] as const;
 export function isPattern(value: unknown): value is Pattern {
-  return value === 'heart' || PATTERNS.some(pattern => pattern === value);
+  return PATTERNS.some(pattern => pattern === value);
 }
 export const MAX_DIMENSION = 4096;
 export const MAX_BYTES = 3 * 1024 * 1024;
@@ -84,10 +84,10 @@ export function parseOptions(query: URLSearchParams | Record<string, unknown>): 
 
 export function shapeMarkup(pattern: Pattern, w: number, h: number, attributes = ''): string {
   const round = Math.round;
-  // Keep the original circle, star and misspelled hart geometry, including non-square canvases.
+  // Keep the original circle, star and heart geometry, including non-square canvases.
   if (pattern === 'circle') return `<circle cx="${w / 2}" cy="${h / 2}" r="${Math.hypot(w, h) / Math.sqrt(8)}" ${attributes}/>`;
   if (pattern === 'star') return `<polygon points="${round(w / 2)},0 ${round(3 * w / 16)},${h} ${w},${round(h / 3)} 0,${round(h / 3)} ${round(13 * w / 16)},${h}" ${attributes}/>`;
-  if (pattern === 'hart' || pattern === 'heart') {
+  if (pattern === 'heart') {
     return `<path d="M${round(w * .1)},${round(w * .3)} A${round(w * .2)},${round(w * .2)},0,0,1,${round(w * .5)},${round(w * .3)} A${round(w * .2)},${round(w * .2)},0,0,1,${round(w * .9)},${round(w * .3)} Q${round(w * .9)},${round(w * .6)},${round(w * .5)},${round(w * .9)} Q${round(w * .1)},${round(w * .6)},${round(w * .1)},${round(w * .3)} Z" ${attributes}/>`;
   }
   if (pattern === 'square' || pattern === 'rounded') return `<rect width="${w}" height="${h}" rx="${pattern === 'rounded' ? Math.min(w, h) * .2 : 0}" ${attributes}/>`;

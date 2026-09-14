@@ -3,7 +3,7 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 import type { Source } from './_lib/core.js';
 import { html, inlineStyles } from './_lib/html.js';
 import { inlineScript } from './_lib/generated/editor.js';
-import { parseRequest } from './_lib/perser.js';
+import { parseRequest } from './_lib/parser.js';
 import { cropImage } from './_lib/cropImage/index.js';
 import { loadRemote, SourceError } from './_lib/source.js';
 

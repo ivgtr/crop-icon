@@ -25,7 +25,7 @@ test('legacy /api without an image returns the editor, including HEAD semantics'
   assert.equal(head.status, 200); assert.equal(await head.text(), '');
   assert.equal(Number(head.headers.get('content-length')), Buffer.byteLength(html));
 }));
-for (const p of ['circle', 'hart', 'star']) test(`legacy HTTP contract for ${p}`, () => withServer(async base => {
+for (const p of ['circle', 'heart', 'star']) test(`legacy HTTP contract for ${p}`, () => withServer(async base => {
   const query = new URLSearchParams({ url: 'https://github.com/ivgtr.png', p });
   const response = await fetch(base + '/api?' + query);
   assert.equal(response.status, 200); assert.equal(response.headers.get('content-type'), 'image/svg+xml');
@@ -51,7 +51,7 @@ test('GET/HEAD/conditional requests share ETag and byte length', () => withServe
   }
 }));
 test('invalid queries never start a source fetch and retain empty 404 semantics', () => withServer(async base => {
-  for (const query of ['url=file:///etc/passwd', 'url=https://example.com&a=1&width=-1', 'url=https://example.com&p=bad', 'url=https://example.com&url=x', 'url=&url=x']) {
+  for (const query of ['url=file:///etc/passwd', 'url=https://example.com&a=1&width=-1', 'url=https://example.com&p=bad', 'url=https://example.com&p=hart', 'url=https://example.com&url=x', 'url=&url=x']) {
     const response = await fetch(base + '/api?' + query);
     assert.equal(response.status, 404); assert.equal(await response.text(), '');
     assert.equal(response.headers.get('cache-control'), 'no-store');

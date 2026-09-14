@@ -1,5 +1,5 @@
 import { renderSvg, type Source } from "../core.js";
-import type { Options } from "../perser.js";
+import type { Options } from "../parser.js";
 import { loadRemote } from "../source.js";
 
 // The HTTP handler delegates image generation here, as in the original project.

@@ -4,7 +4,7 @@ import { readFileSync, existsSync } from 'node:fs';
 import h, { text } from '../api/_lib/utils/tag.js';
 import s from '../api/_lib/utils/style.js';
 import { html, inlineStyles } from '../api/_lib/html.js';
-import { parseRequest } from '../api/_lib/perser.js';
+import { parseRequest } from '../api/_lib/parser.js';
 import { cropImage } from '../api/_lib/cropImage/index.js';
 import { PATTERNS, parseOptions, renderSvg } from '../api/_lib/core.js';
 import { PNG } from './fixtures.js';
@@ -59,19 +59,19 @@ test('original Markdown examples, shape names and project links work without Jav
   const page = markup();
   assert.match(page, /<noscript>/);
   assert.match(page, /Copy-paste this into your markdown/);
-  for (const pattern of ['circle', 'hart', 'star']) assert.ok(page.includes(`/api?p=${pattern}&amp;url=https://github.com/ivgtr.png`));
+  for (const pattern of ['circle', 'heart', 'star']) assert.ok(page.includes(`/api?p=${pattern}&amp;url=https://github.com/ivgtr.png`));
   assert.match(page, /href="https:\/\/github.com\/ivgtr\/crop-icon"/);
   assert.doesNotMatch(page, /target="_brank"/);
 });
 test('the original parser entry point shares browser/API defaults and validation', () => {
-  for (const p of ['circle', 'hart', 'star', 'hexagon']) {
+  for (const p of ['circle', 'heart', 'star', 'hexagon']) {
     const query = new URLSearchParams({ url: 'https://github.com/ivgtr.png', p, width: '256' });
     assert.deepEqual(parseRequest(query), parseOptions(query));
   }
   assert.throws(() => parseRequest({ width: '-1' }));
 });
 test('cropImage retains the image-generation responsibility and shared rendering', async () => {
-  const options = parseRequest({ url: 'https://github.com/ivgtr.png', p: 'hart', width: '256' });
+  const options = parseRequest({ url: 'https://github.com/ivgtr.png', p: 'heart', width: '256' });
   const source = { data: `data:image/png;base64,${PNG.toString('base64')}`, width: 1, height: 1 };
   let calls = 0;
   const actual = await cropImage(options, async url => { assert.equal(url, options.url); calls++; return source; });
