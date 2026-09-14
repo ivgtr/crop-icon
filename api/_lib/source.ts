@@ -2,7 +2,7 @@ import { lookup } from 'node:dns/promises';
 import { get as httpGet, type IncomingMessage } from 'node:http';
 import { get as httpsGet } from 'node:https';
 import { BlockList, isIP } from 'node:net';
-import { imageSize } from 'image-size';
+import { rasterDimensions } from './raster.js';
 import { MAX_BYTES, MAX_PIXELS, validateUrl, type Source } from './core.js';
 
 export class SourceError extends Error {
@@ -30,7 +30,7 @@ export function isPublicAddress(address: string): boolean {
 export function inspectImage(bytes: Buffer): Source {
   if (!bytes.length || bytes.length > MAX_BYTES) throw new SourceError('source_too_large');
   let dimensions;
-  try { dimensions = imageSize(bytes); } catch { throw new SourceError('invalid_image'); }
+  try { dimensions = rasterDimensions(bytes); } catch { throw new SourceError('invalid_image'); }
   const mime: Record<string, string> = { jpg: 'jpeg', png: 'png', gif: 'gif', webp: 'webp' };
   if (!dimensions.type || !mime[dimensions.type] || !dimensions.width || !dimensions.height ||
       dimensions.width > 16384 || dimensions.height > 16384 || dimensions.width * dimensions.height > MAX_PIXELS) {

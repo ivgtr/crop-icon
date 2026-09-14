@@ -1,0 +1,34 @@
+name: PR verification workspace
+on:
+  pull_request:
+    paths: [.github/workflows/verification-workspace.yml]
+permissions:
+  contents: read
+jobs:
+  workspace:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install the declared dependencies and validate
+        run: |
+          if [ -f yarn.lock ]; then
+            corepack enable
+            yarn install --frozen-lockfile --non-interactive
+            yarn check
+          else
+            npm ci
+            npm run check
+          fi
+      - name: Package the tested sources and build tools
+        run: tar --exclude=.git -czf /tmp/validation-workspace.tar.gz .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: verification-workspace
+          path: /tmp/validation-workspace.tar.gz
+          retention-days: 1
