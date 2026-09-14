@@ -1,5 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
+import { html as renderHtml, inlineStyles } from '../build/api/_lib/html.js';
 import { createServer } from 'node:http';
 import { once } from 'node:events';
 import { createHandler } from '../build/api/index.js';
@@ -64,10 +66,32 @@ test('unsupported methods do not trigger network requests', () => withServer(asy
   assert.equal(response.status, 405); assert.equal(response.headers.get('allow'), 'GET, HEAD');
 }, async () => assert.fail('POST reached network loader')));
 
+test('HTML routes serve html() with a hash permitting only its generated inline stylesheet', () => withServer(async base => {
+  for (const path of ['/', '/api', '/api/', '/api?url=']) {
+    const response = await fetch(base + path);
+    assert.equal(response.status, 200);
+    const page = await response.text();
+    assert.equal(page, renderHtml());
+    const style = page.match(/<style id="studio-style">([\s\S]*?)<\/style>/)[1];
+    assert.equal(style, inlineStyles);
+    const hash = createHash('sha256').update(style).digest('base64');
+    const csp = response.headers.get('content-security-policy');
+    assert.ok(csp.includes(`style-src 'self' 'sha256-${hash}'`));
+    assert.match(csp, /script-src 'self'/);
+    assert.doesNotMatch(csp, /unsafe-inline|unsafe-eval/);
+    assert.equal(Number(response.headers.get('content-length')), Buffer.byteLength(page));
+  }
+}, async () => assert.fail('Rendering the editor must not fetch a remote image')));
+test('HTML query values are not interpolated into the generated document or its styles', () => withServer(async base => {
+  const payload = new URLSearchParams({ p: '</style><script>alert(1)</script>', color: '"onload="alert(1)' });
+  const response = await fetch(base + '/api?' + payload);
+  assert.equal(await response.text(), renderHtml());
+}));
+
+// Keep the CSP/route coverage introduced by the concurrent inline-style commit.
 test('the editor ships one inline stylesheet and a matching CSP hash, without unsafe-inline', () => withServer(async base => {
   const response = await fetch(base + '/api');
   const html = await response.text();
-  const { createHash } = await import('node:crypto');
   const blocks = [...html.matchAll(/<style id="studio-style">([\s\S]*?)<\/style>/g)];
   assert.equal(blocks.length, 1);
   assert.match(blocks[0][1], /@media/);
@@ -101,7 +125,8 @@ test('Vercel routes the editor aliases to the API that supplies its CSP', async 
   const { readFile } = await import('node:fs/promises');
   const config = JSON.parse(await readFile(new URL('../vercel.json', import.meta.url), 'utf8'));
   assert.equal(config.outputDirectory, 'public');
-  assert.equal(config.functions['api/index.ts'].includeFiles, 'public/index.html');
+  // The imported html() module replaces runtime template-file inclusion.
+  assert.equal(config.functions['api/index.ts'].includeFiles, undefined);
   for (const source of ['/', '/index.html']) {
     assert.ok(config.rewrites.some(rule => rule.source === source && rule.destination === '/api'));
   }
@@ -109,7 +134,7 @@ test('Vercel routes the editor aliases to the API that supplies its CSP', async 
 
 test('the editor references existing local modules, not a missing stylesheet', async () => {
   const { readFile, access } = await import('node:fs/promises');
-  const html = await readFile(new URL('../public/index.html', import.meta.url), 'utf8');
+  const html = renderHtml();
   assert.doesNotMatch(html, /\/style\.css/);
   for (const [, path] of html.matchAll(/<script[^>]+src="(\/[^\"]+)"/g)) {
     await access(new URL('../public' + path, import.meta.url));

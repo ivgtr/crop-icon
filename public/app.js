@@ -1,4 +1,4 @@
-import { PATTERNS, MAX_BYTES, MAX_PIXELS, parseOptions, renderSvg, shapeMarkup, toQuery, validateUrl, escapeXml } from './core.js';
+import { MAX_BYTES, MAX_PIXELS, parseOptions, renderSvg, toQuery, validateUrl, escapeXml } from './core.js';
 
 const $ = id => document.getElementById(id);
 const label = p => p === 'hart' || p === 'heart' ? 'Heart' : p[0].toUpperCase() + p.slice(1);
@@ -177,17 +177,9 @@ async function copy(text) {
     status('Clipboard unavailable. The text is selected above; copy it manually.');
   }
 }
-for (const p of PATTERNS) {
-  const button = document.createElement('button');
-  button.type = 'button';
-  button.className = 'shape';
-  button.dataset.pattern = p;
-  button.setAttribute('aria-label', label(p));
-  button.setAttribute('aria-pressed', String(p === pattern));
-  // Only constant shape definitions enter markup; user input is never assigned to innerHTML.
-  button.innerHTML = `<svg viewBox="0 0 100 100" aria-hidden="true">${shapeMarkup(p, 100, 100)}</svg><span>${label(p)}</span>`;
-  button.addEventListener('click', () => { pattern = p; scheduleRender(); });
-  $('shapes').append(button);
+// html.ts renders the controls; this script progressively adds editor behavior.
+for (const button of document.querySelectorAll('#shapes [data-pattern]')) {
+  button.addEventListener('click', () => { pattern = button.dataset.pattern; scheduleRender(); });
 }
 $('source-form').addEventListener('submit', event => { event.preventDefault(); if ($('url').value) loadUrl($('url').value); });
 $('file').addEventListener('change', () => loadFile($('file').files[0]));

@@ -14,7 +14,7 @@ Turn a public image URL into an embeddable icon, or bring a local image and make
 
 Open the studio, load a public image URL or choose/drop a local file, then select a shape. Adjust the output size, image fit, zoom, horizontal/vertical position, inside border and background while comparing the original with the result.
 
-The **Avatar**, **README sticker** and **Game token** presets are starting points, not separate rendering modes. On phones, the preview stays visible while scrolling through the controls.
+The **Avatar**, **README sticker** and **Game token** presets are starting points, not separate rendering modes. On phones, the preview is placed above the controls in a single-column layout.
 
 **Download SVG / PNG** creates a self-contained snapshot. **Copy URL / Markdown / HTML** creates a live image embed backed by the existing API. **Edit link** recreates a public-source edit, including its controls.
 
@@ -97,24 +97,35 @@ npm test
 npm run check
 ```
 
-`npm run check` runs strict TypeScript/JSDoc checks on the API/shared core, the browser script syntax check, and native Node tests. Tests cover the original API contract and geometry, all shapes, image format/EXIF handling, query validation, response headers, stream limits, DNS pinning, private-address rejection, redirects, timeouts and HTTP GET/HEAD/304 behavior. HTTP handler tests use a real local server with an injected image source; loader tests mock network IO while retaining the real validation policy.
+`npm run check` runs strict TypeScript/JSDoc checks on the API/shared core, the browser script syntax check, and the native Node test suite. Tests cover the original API contract and geometry, all shapes, image format/EXIF handling, query validation, response headers, stream limits, DNS pinning, private-address rejection, redirects, timeouts and HTTP GET/HEAD/304 behavior. The original `h()` / `s()` composition, generated HTML, editor hook IDs, stylesheet hash/CSP and no-JavaScript API examples are also covered. HTTP handler tests use a real local server with an injected image source; loader tests mock network IO while retaining the real validation policy.
 
 CI runs these checks on Node 22 for PRs and pushes to `main`.
 
 ### Structure
 
-- `public/core.js`: platform-independent parser, shape definitions, URL serializer and SVG renderer; JSDoc checked by TypeScript. This is the exact same module imported by the browser and API.
-- `api/_lib/source.ts`: bounded remote image loading and image metadata inspection.
-- `api/index.ts`: backwards-compatible HTTP entry point, HTML shell and cache/error headers.
-- `public/index.html`: editor markup and its embedded `<style id="studio-style">`; no external CSS request.
-- `public/app.js`: dependency-free editing interactions and browser exports.
-- `scripts/dev.mjs`: a small local server; not a production application entry point.
+The original server-generated HTML architecture is retained, rather than replaced by a static page or frontend framework:
+
+```text
+api/index.ts
+  ├─ no image URL → html() → h() + s() → HTML with inline <style>
+  └─ image URL    → parseRequest() → cropImage() → SVG
+```
+
+- `api/_lib/html.ts`: the single source of the editor HTML and inline styles, built with the original `h(tag, attributes, ...children)` and `s(selector, declarations, ...children)` helpers. Small section functions keep the page maintainable; shape buttons are rendered here using shared geometry.
+- `api/_lib/utils/tag.ts`: the original tag-builder interface with attribute escaping, explicit text escaping and boolean-attribute support. Child strings remain **trusted markup**, as in the original; call `text()` for untrusted plain text.
+- `api/_lib/utils/style.ts`: the original style helper, including camelCase conversion and child-rule composition for responsive media rules.
+- `api/_lib/perser.ts`: retains the original filename and `parseRequest` entry point, delegating to shared validation.
+- `api/_lib/cropImage/index.ts`: retains the image-generation entry point; combines the bounded loader with shared SVG rendering.
+- `public/core.js`: platform-independent parser, shapes, URL serializer and renderer shared by the API and browser, with TypeScript-checked JSDoc. It replaces the separate legacy filter implementation, not the server's responsibility boundaries.
+- `api/_lib/source.ts`: bounded remote image loading and metadata inspection, replacing the old unbounded fetch and hard-coded JPEG MIME type.
+- `public/app.js`: attaches editor behavior to server-rendered controls and handles local files/downloads. It does not create a second copy of the shape buttons or page shell.
+- `scripts/dev.mjs`: local HTTP server using the same API handler and the two public JavaScript files.
+
+There is no `public/index.html` or external `style.css`. The handler computes a SHA-256 CSP hash from the same `inlineStyles` string used by `html()`. Inline styles are allowed only by this hash; `unsafe-inline` and inline event handlers are not used. Static content is never interpolated from request parameters. The Usage/Markdown examples and API links remain readable without JavaScript.
 
 ### Vercel
 
-The project uses the Node 22 `/api` function and static files in `public/`. `vercel.json` specifies the build command, static output directory, function duration and HTML file inclusion. No secrets or environment variables are required. `/` and `/index.html` rewrite to the same `/api` editor response. Image requests to `/api?url=...` are unchanged.
-
-The editor has its complete responsive stylesheet in `public/index.html`. The API normalizes HTML line endings and computes a SHA-256 hash from that exact style block for the `Content-Security-Policy` header. Updating the stylesheet does not require a manually maintained hash or `unsafe-inline`. Arbitrary inline styles and inline scripts remain disallowed. The SVG response keeps its separate restrictive policy. Keep the `studio-style` ID when editing the template; HTTP tests verify the hash and the absence of missing local stylesheet references.
+The project uses the Node 22 `/api` function and the JavaScript files in `public/`. `/` and `/index.html` rewrite to `/api`, so the editor routes use the generated HTML and the same CSP. The HTML module is a normal TypeScript import; no `readFileSync`, working-directory assumptions or `includeFiles` template configuration is required. The public output directory contains only browser modules, not a duplicate HTML page that could drift from the API response. No secrets or environment variables are required.
 
 Before merging a deployment, verify a clean `npm ci`, the preview build, the existing README embed, remote GitHub-avatar redirects, and SVG/PNG downloads in the target browsers. External fetching and the Vercel deployment were not exercised in the offline implementation environment.
 
