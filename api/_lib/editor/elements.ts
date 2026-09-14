@@ -1,0 +1,45 @@
+// Resolve and check each hook once. A missing or wrong tag fails early, not as an untyped cast.
+function element<T extends HTMLElement>(id: string, type: { new(): T }): T {
+  const node = document.getElementById(id);
+  if (!(node instanceof type)) throw new Error(`Missing or invalid editor element: ${id}`);
+  return node;
+}
+export const elements = {
+  'source-form': element('source-form', HTMLFormElement),
+  options: element('options', HTMLFormElement),
+  url: element('url', HTMLInputElement),
+  file: element('file', HTMLInputElement),
+  width: element('width', HTMLInputElement),
+  height: element('height', HTMLInputElement),
+  fit: element('fit', HTMLSelectElement),
+  zoom: element('zoom', HTMLInputElement),
+  x: element('x', HTMLInputElement),
+  y: element('y', HTMLInputElement),
+  border: element('border', HTMLInputElement),
+  color: element('color', HTMLInputElement),
+  bg: element('bg', HTMLInputElement),
+  transparent: element('transparent', HTMLInputElement),
+  'zoom-value': element('zoom-value', HTMLOutputElement),
+  'x-value': element('x-value', HTMLOutputElement),
+  'y-value': element('y-value', HTMLOutputElement),
+  'border-value': element('border-value', HTMLOutputElement),
+  load: element('load', HTMLButtonElement),
+  reset: element('reset', HTMLButtonElement),
+  'download-svg': element('download-svg', HTMLButtonElement),
+  'download-png': element('download-png', HTMLButtonElement),
+  'copy-url': element('copy-url', HTMLButtonElement),
+  'copy-md': element('copy-md', HTMLButtonElement),
+  'copy-html': element('copy-html', HTMLButtonElement),
+  'copy-editor': element('copy-editor', HTMLButtonElement),
+  original: element('original', HTMLImageElement),
+  result: element('result', HTMLImageElement),
+  embed: element('embed', HTMLTextAreaElement),
+  'drop-zone': element('drop-zone', HTMLLabelElement),
+  'preview-area': element('preview-area', HTMLDivElement),
+  shapes: element('shapes', HTMLDivElement),
+  privacy: element('privacy', HTMLParagraphElement),
+  status: element('status', HTMLParagraphElement),
+  'source-info': element('source-info', HTMLSpanElement),
+  'shape-label': element('shape-label', HTMLSpanElement),
+  dimensions: element('dimensions', HTMLSpanElement),
+};
