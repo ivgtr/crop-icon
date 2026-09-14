@@ -1,21 +1,13 @@
 {
   "compilerOptions": {
-    "target": "ES2022",
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext",
-    "strict": true,
-    "allowJs": true,
-    "checkJs": true,
-    "outDir": "build",
-    "rootDir": ".",
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "noImplicitReturns": true,
-    "noFallthroughCasesInSwitch": true,
-    "noEmitOnError": true,
-    "forceConsistentCasingInFileNames": true,
-    "skipLibCheck": true
+    "target": "ES2022", "module": "NodeNext", "moduleResolution": "NodeNext",
+    "strict": true, "allowJs": false, "checkJs": false,
+    "outDir": "build", "rootDir": ".",
+    "noUnusedLocals": true, "noUnusedParameters": true, "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true, "noEmitOnError": true,
+    "forceConsistentCasingInFileNames": true, "skipLibCheck": true,
+    "lib": ["ES2022"], "types": ["node"]
   },
-  "include": ["api/**/*.ts", "public/core.js"],
-  "exclude": ["node_modules", "build"]
+  "include": ["api/**/*.ts", "scripts/**/*.ts", "tests/*.ts"],
+  "exclude": ["node_modules", "build", "api/_lib/editor"]
 }

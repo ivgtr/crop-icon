@@ -5,3 +5,4 @@ build/
 !.env.example
 .DS_Store
 test-results/
+api/_lib/generated/

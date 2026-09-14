@@ -1,15 +1,15 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
-import h, { text } from '../build/api/_lib/utils/tag.js';
-import s from '../build/api/_lib/utils/style.js';
-import { html, inlineStyles } from '../build/api/_lib/html.js';
-import { parseRequest } from '../build/api/_lib/perser.js';
-import { cropImage } from '../build/api/_lib/cropImage/index.js';
-import { PATTERNS, parseOptions, renderSvg } from '../public/core.js';
-import { PNG } from './fixtures.mjs';
+import h, { text } from '../api/_lib/utils/tag.js';
+import s from '../api/_lib/utils/style.js';
+import { html, inlineStyles } from '../api/_lib/html.js';
+import { parseRequest } from '../api/_lib/perser.js';
+import { cropImage } from '../api/_lib/cropImage/index.js';
+import { PATTERNS, parseOptions, renderSvg } from '../api/_lib/core.js';
+import { PNG } from './fixtures.js';
 
-// Protect the original composition model, not just the presence of a styled screenshot.
+const markup = () => html().replace(/<script\b[^>]*>[\s\S]*?<\/script>/g, '');
 test('h still composes nested markup and handles the original void elements', () => {
   assert.equal(h('div', { class: 'container' }, h('img', { src: '/api?url=x' }), h('p', {}, 'Hello')),
     '<div class="container"><img src="/api?url=x"><p>Hello</p></div>');
@@ -30,25 +30,25 @@ test('s retains original camelCase declarations and media-rule composition', () 
   assert.equal(s('@media (max-width: 760px)', {}, s('.studio', { display: 'block' })), '@media (max-width: 760px) {.studio { display: block;}}');
 });
 test('html() is deterministic and embeds exactly the shared style string once', () => {
-  const page = html();
-  assert.equal(page, html());
+  const page = markup();
+  assert.equal(html(), html());
   assert.ok(page.startsWith('<!DOCTYPE html><html'));
   assert.equal([...page.matchAll(/<style\b/g)].length, 1);
-  assert.equal(page.match(/<style id="studio-style">([\s\S]*?)<\/style>/)[1], inlineStyles);
+  assert.equal(page.match(/<style id="studio-style">([\s\S]*?)<\/style>/)?.[1], inlineStyles);
   assert.match(inlineStyles, /@media \(max-width: 760px\)/);
   assert.match(inlineStyles, /\.studio \{ display: grid;/);
   assert.doesNotMatch(page, /style\.css|rel="stylesheet"|\sstyle="|\son[a-z]+="/i);
 });
 test('shape controls are server-rendered once and use the shared shape definitions', () => {
-  const page = html();
+  const page = markup();
   assert.equal([...page.matchAll(/data-pattern=/g)].length, PATTERNS.length);
   for (const pattern of PATTERNS) assert.match(page, new RegExp(`data-pattern="${pattern}"`));
   assert.equal([...page.matchAll(/aria-pressed="true"/g)].length, 1);
-  const script = readFileSync('public/app.js', 'utf8');
+  const script = readFileSync('api/_lib/editor/index.ts', 'utf8');
   assert.doesNotMatch(script, /createElement\('button'\)|innerHTML|shapeMarkup/);
 });
 test('the server document contains each editor hook exactly once', () => {
-  const ids = [...html().matchAll(/\sid="([^"]+)"/g)].map(match => match[1]);
+  const ids = [...markup().matchAll(/\sid="([^"]+)"/g)].map(match => match[1]);
   assert.equal(ids.length, new Set(ids).size);
   for (const id of ['source-form', 'url', 'load', 'drop-zone', 'file', 'privacy', 'shapes', 'reset', 'options', 'width', 'height', 'fit',
     'zoom', 'zoom-value', 'x', 'x-value', 'y', 'y-value', 'border', 'border-value', 'color', 'bg', 'transparent', 'preview-area',
@@ -56,7 +56,7 @@ test('the server document contains each editor hook exactly once', () => {
     'copy-html', 'copy-editor', 'status', 'usage']) assert.ok(ids.includes(id), `Missing editor hook: ${id}`);
 });
 test('original Markdown examples, shape names and project links work without JavaScript', () => {
-  const page = html();
+  const page = markup();
   assert.match(page, /<noscript>/);
   assert.match(page, /Copy-paste this into your markdown/);
   for (const pattern of ['circle', 'hart', 'star']) assert.ok(page.includes(`/api?p=${pattern}&amp;url=https://github.com/ivgtr.png`));
@@ -78,12 +78,11 @@ test('cropImage retains the image-generation responsibility and shared rendering
   assert.equal(calls, 1);
   assert.equal(actual, renderSvg(source, options));
 });
-test('Vercel and local serving do not depend on a duplicated HTML or external stylesheet', () => {
-  assert.equal(existsSync('public/index.html'), false);
-  assert.equal(existsSync('public/style.css'), false);
+test('Vercel and local serving do not depend on public files or a duplicate template', () => {
+  assert.equal(existsSync('public'), false);
   const config = JSON.parse(readFileSync('vercel.json', 'utf8'));
-  assert.ok(config.rewrites.some(rule => rule.source === '/' && rule.destination === '/api'));
+  assert.ok(config.rewrites.some((rule: { source: string; destination: string }) => rule.source === '/' && rule.destination === '/api'));
   assert.equal(config.functions['api/index.ts'].includeFiles, undefined);
-  assert.doesNotMatch(readFileSync('api/index.ts', 'utf8'), /readFileSync|process\.cwd|public\/index\.html/);
-  assert.doesNotMatch(readFileSync('scripts/dev.mjs', 'utf8'), /style\.css/);
+  assert.doesNotMatch(readFileSync('api/index.ts', 'utf8'), /readFileSync|process\.cwd|public\//);
+  assert.doesNotMatch(readFileSync('scripts/dev.ts', 'utf8'), /readFile|core\.js|app\.js|public/);
 });

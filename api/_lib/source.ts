@@ -3,7 +3,7 @@ import { get as httpGet, type IncomingMessage } from 'node:http';
 import { get as httpsGet } from 'node:https';
 import { BlockList, isIP } from 'node:net';
 import { imageSize } from 'image-size';
-import { MAX_BYTES, MAX_PIXELS, validateUrl, type Source } from '../../public/core.js';
+import { MAX_BYTES, MAX_PIXELS, validateUrl, type Source } from './core.js';
 
 export class SourceError extends Error {
   constructor(public readonly code: string) { super(code); }
@@ -88,7 +88,6 @@ export async function loadRemote(url: string, resolve?: Resolver, timeout = 8000
       const get = target.protocol === 'https:' ? httpsGet : httpGet;
       const request = get(target, {
         signal: controller.signal, agent: false, family: pinned.family,
-        // Connect to the address we validated, not a second DNS result (DNS rebinding).
         lookup: (_host, _options, callback) => callback(null, pinned.address, pinned.family),
         headers: { Accept: 'image/png,image/jpeg,image/gif,image/webp', 'Accept-Encoding': 'identity', 'User-Agent': 'crop-icon/1.0' },
       }, accept);

@@ -1,6 +1,7 @@
 import s from "./utils/style.js";
 import h, { text } from "./utils/tag.js";
-import { PATTERNS, shapeMarkup } from "../../public/core.js";
+import { PATTERNS, shapeMarkup } from "./core.js";
+import { inlineScript } from "./generated/editor.js";
 
 // The original h()/s() composition remains the source of the document and its styles.
 // This exact string is also hashed by the HTTP handler; no style attributes are needed.
@@ -212,8 +213,7 @@ export const html = (): string => {
       h("meta", { name: "description", content: "Crop an image into a different shape. Download an avatar, sticker or game token, or embed it with the original image API." }),
       h("title", {}, "crop-icon — a different shape"),
       h("link", { rel: "icon", href: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M9 2v21h21M2 9h21v21' fill='none' stroke='%23253f31' stroke-width='3'/%3E%3C/svg%3E" }),
-      h("style", { id: "studio-style" }, inlineStyles),
-      h("script", { type: "module", src: "/app.js" })),
+      h("style", { id: "studio-style" }, inlineStyles)),
     h("body", {}, h("div", { class: "container" },
       h("header", { class: "topbar" },
         h("a", { class: "brand", href: "/", "aria-label": "crop-icon home" },
@@ -228,6 +228,7 @@ export const html = (): string => {
         h("div", { class: "studio" }, controls(), h("div", { class: "workspace" }, preview(), exportsPanel(),
           h("p", { id: "status", class: "status", role: "status", "aria-live": "polite" }, "Pick a shape. The demo is ready to play with."), usage()))),
       h("footer", {}, h("span", {}, "crop-icon / MIT © ", h("a", { href: "https://github.com/ivgtr" }, "ivgtr")),
-        h("span", {}, "Questions or ideas? ", h("a", { href: "https://github.com/ivgtr/crop-icon" }, "GitHub"), " · ", h("a", { href: "https://twitter.com/ivgtr" }, "X"))))));
+        h("span", {}, "Questions or ideas? ", h("a", { href: "https://github.com/ivgtr/crop-icon" }, "GitHub"), " · ", h("a", { href: "https://twitter.com/ivgtr" }, "X")))),
+      h("script", { id: "studio-script" }, inlineScript)));
   return head + element;
 };

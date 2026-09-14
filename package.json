@@ -4,26 +4,17 @@
   "private": true,
   "type": "module",
   "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/ivgtr/crop-icon.git"
-  },
-  "engines": {
-    "node": "22.x"
-  },
+  "repository": { "type": "git", "url": "git+https://github.com/ivgtr/crop-icon.git" },
+  "engines": { "node": "22.x" },
   "scripts": {
     "start": "npm run dev",
-    "dev": "npm run build && node scripts/dev.mjs",
-    "build": "tsc",
-    "typecheck": "tsc --noEmit",
-    "test": "npm run build && node --test tests/*.test.mjs",
-    "check": "npm run typecheck && node --check public/app.js && npm test"
+    "dev": "npm run build && node build/scripts/dev.js",
+    "build": "npm run generate:editor && tsc",
+    "typecheck": "npm run generate:editor && tsc --noEmit",
+    "generate:editor": "tsc -p tsconfig.editor.json && tsc -p tsconfig.tools.json && esbuild api/_lib/editor/index.ts --tsconfig=tsconfig.editor.json --bundle --platform=browser --format=iife --target=es2022 --charset=ascii --legal-comments=none --minify --outfile=build/editor.js --metafile=build/editor.meta.json && node build/scripts/build.js",
+    "test": "npm run build && node --test build/tests/*.test.js",
+    "check": "npm test"
   },
-  "dependencies": {
-    "image-size": "2.0.2"
-  },
-  "devDependencies": {
-    "@types/node": "22.19.7",
-    "typescript": "5.8.3"
-  }
+  "dependencies": { "image-size": "2.0.2" },
+  "devDependencies": { "@types/node": "22.19.7", "typescript": "5.8.3", "esbuild": "0.25.12" }
 }

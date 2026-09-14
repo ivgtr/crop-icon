@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "ESNext", "moduleResolution": "Bundler",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"], "types": [], "noEmit": true
+  },
+  "include": ["api/_lib/core.ts", "api/_lib/editor/**/*.ts", "tests/types/editor.ts"],
+  "exclude": ["node_modules", "build", "api/_lib/generated"]
+}

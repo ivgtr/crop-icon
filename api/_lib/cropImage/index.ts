@@ -1,4 +1,4 @@
-import { renderSvg, type Source } from "../../../public/core.js";
+import { renderSvg, type Source } from "../core.js";
 import type { Options } from "../perser.js";
 import { loadRemote } from "../source.js";
 
