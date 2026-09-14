@@ -17,30 +17,28 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7.0.0
         with:
-          node-version: 22
-          cache: yarn
-      - name: Use Yarn Classic
-        run: |
-          corepack enable
-          corepack prepare yarn@1.22.22 --activate
-      - run: yarn install --frozen-lockfile --non-interactive --production=false
-      - run: yarn run check
-      - run: yarn run playwright install --with-deps chromium
+          node-version: 24
+          cache: npm
+      - name: Use the pinned npm version
+        run: npm install --global npm@12.0.2
+      - run: npm ci --include=dev
+      - run: npm run check
+      - run: npm exec -- playwright install --with-deps chromium
       - name: Browser tests against the production handler
-        run: yarn run test:e2e
+        run: npm run test:e2e
       - name: Browser tests against the requested deployment
         if: inputs.preview_url != ''
         env:
           E2E_BASE_URL: ${{ inputs.preview_url }}
-        run: yarn run test:e2e --output=test-results-preview --reporter=list
+        run: npm run test:e2e -- --output=test-results-preview --reporter=list
       - name: Verify the lockfile was not modified
-        run: git diff --exit-code -- yarn.lock
-      - uses: actions/upload-artifact@v4
+        run: git diff --exit-code -- package-lock.json
+      - uses: actions/upload-artifact@v7.0.1
         if: always()
         with:
           name: browser-verification

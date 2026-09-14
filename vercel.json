@@ -1,9 +1,9 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "version": 2,
-  "installCommand": "yarn install --frozen-lockfile --non-interactive --production=false",
+  "installCommand": "npm install --global npm@12.0.2 && npm ci --include=dev",
   "builds": [
-    { "src": "api/index.ts", "use": "@vercel/node", "config": { "maxDuration": 15 } }
+    { "src": "api/index.ts", "use": "@vercel/node@13.0.0", "config": { "maxDuration": 15 } }
   ],
   "rewrites": [
     { "source": "/", "destination": "/api/index.ts" },

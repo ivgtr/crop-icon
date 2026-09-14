@@ -1,36 +1,28 @@
-# Browser verification
+# Verification and deployment
 
-The application, test implementation and Playwright configuration are TypeScript. Browser tests have a separate strict `tsconfig.e2e.json`; they are type-checked before Playwright runs them.
+## Local checks
+
+Use Node.js 24 (at least 24.15.0) and npm 12.0.2:
 
 ```sh
-corepack enable
-corepack prepare yarn@1.22.22 --activate
-yarn install --frozen-lockfile --non-interactive --production=false
-yarn run check
-yarn run playwright install --with-deps chromium
-yarn run test:e2e
+npm install --global npm@12.0.2
+npm ci --include=dev
+npm audit
+npm run check
+npm exec -- playwright install --with-deps chromium
+npm run test:e2e
 ```
 
-The local run starts the already-built development adapter, which delegates to the same `api/index.ts` handler. It does not introduce another deployed entry point or serve source files. Public-image tests deliberately contact GitHub rather than mocking image retrieval, so these tests require network access.
+`check` strictly compiles the browser, build tools, API and unit tests, then runs the unit suite. Tests cover renderer/API behavior, network restrictions, raster headers, EXIF orientation, malformed lengths and timeout-enforced parser rejection. Build checks use esbuild metadata and script compilation, not TypeScript's removed Compiler API.
 
-To check a deployment, set `E2E_BASE_URL` to its public origin and run `yarn run test:e2e`. This disables the local server. The Browser verification workflow also accepts an optional `preview_url` when run manually. A PR workflow never silently tests a hard-coded preview belonging to a different branch. Deployment authentication is not bypassed.
+Browser checks run in desktop and mobile-emulated Chromium with no retries. They exercise the actual CSP, eleven shapes, local PNG/JPEG/GIF/WebP decoding and downloads, invalid input, public-image retrieval, copying and edit-link restoration. Public-image cases contact GitHub and require network access. Emulation is not a Safari/Firefox or physical-device test.
 
-## Coverage
+To verify a deployed commit, set `E2E_BASE_URL` to its public origin before running `npm run test:e2e`, or supply `preview_url` to the Browser verification workflow. This disables the local server; authentication is not bypassed. Consult the workflow for the particular commit rather than treating an older successful run as validation of new code.
 
-The same five scenarios run in desktop (1440 x 1000) and mobile-emulated (390 x 844) Chromium contexts:
+## Vercel
 
-- The compiled inline script runs with the real CSP, all eleven shapes respond, reset works and the page has no horizontal overflow.
-- PNG/JPEG/GIF/WebP files decode locally without network uploads. SVG and PNG downloads are read back; dimensions, embedded raster data, opaque center and transparent corner pixels are checked.
-- Invalid dimensions and unsupported SVG input disable export; a valid file restores it.
-- A real public GitHub avatar loads, the API returns a cached SVG, URL/Markdown/HTML copying works, and an edit link restores the source and settings before downloading again.
-- Existing editor aliases respond while old public JavaScript paths and internal source/build paths return 404.
+`api/index.ts` remains the only public entry. The editor is compiled from `_lib` TypeScript and embedded by `html()`; no static JS directory is deployed.
 
-Screenshots and failure traces are retained as CI artifacts. Mobile emulation is not a real-device or Safari/Firefox test.
+The repository pins the Node builder, sets `engines.node` to `24.x`, installs npm 12.0.2 followed by `npm ci --include=dev`, and runs `npm run build` through `vercel-build`. npm is used without a Corepack dependency.
 
-## Initial recorded run
-
-[Run 34853807636](https://github.com/ivgtr/crop-icon/actions/runs/34853807636/job/104008086813), 2026-09-14, used Node 22.23.2, Yarn 1.22.22 and Playwright 1.58.2. Its log records 136/136 unit tests, 10/10 browser tests against the local handler and 10/10 against the PR's Vercel Preview, with no retries. The preview screenshots were also inspected.
-
-This initial run generated the additional browser dependency lock entries. The generated lockfile was subsequently committed unchanged, and the permanent workflows use `--frozen-lockfile` plus a lockfile-diff check. Consult the latest workflow runs for the final commit's result; this historical record does not imply that every later commit has been tested against a deployment.
-
-For the upstream dependency warnings and their application-level mitigation, see [SECURITY.md](../SECURITY.md).
+In Project Settings, use Node.js 24.x. Remove stale Yarn install/build overrides and any `static` / `build/static` Output Directory override; this project deploys a function, not a static output directory. Let `vercel.json` control installation and routing. Redeploy without the old build cache when switching the package manager. Dashboard settings are not changed by this repository.

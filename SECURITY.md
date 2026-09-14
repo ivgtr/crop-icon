@@ -1,22 +1,17 @@
-# Image parsing security
+# Security
 
-## Known upstream advisories (reviewed 2026-09-14)
+## Image inspection
 
-`image-size@2.0.2` is affected by two High-severity advisories. Both currently list no patched release:
+`api/_lib/raster.ts` reads dimensions from PNG IHDR, JPEG SOF and EXIF IFD0, GIF logical-screen descriptors, and WebP VP8/VP8L/VP8X headers. It is a bounded header inspector, not a pixel decoder or a complete file-integrity validator. EXIF orientation is used for JPEG display dimensions. WebP animation uses its canvas dimensions.
 
-- [GHSA-5p2g-fcmc-qvqq / CVE-2025-71329](https://github.com/advisories/GHSA-5p2g-fcmc-qvqq): zero-sized JXL/HEIF boxes can prevent the parser offset from advancing.
-- [GHSA-w3rx-r6r6-pgpr / CVE-2025-71330](https://github.com/advisories/GHSA-w3rx-r6r6-pgpr): a zero-sized ICNS entry can cause the same synchronous infinite loop.
+Every variable-length segment and container-relative offset is checked before reading. Marker/chunk loops advance on every iteration; EXIF pointers are not followed recursively. Malformed headers and unsupported formats are rejected rather than handed to another parser. The application has no production npm dependencies; `image-size` and its generic format handlers are removed.
 
-A network timeout cannot interrupt a synchronous parser loop. Checking the returned MIME type after calling `imageSize()` is too late.
+Inputs are limited to 3 MiB, 40 megapixels and 16,384 pixels per side before rendering. Public HTTP(S) retrieval validates and pins DNS results, revalidates every redirect, blocks private/metadata networks, and bounds redirects, body size and total retrieval time. These restrictions apply to server retrieval; local images are decoded in the browser without upload.
 
-## Application mitigation
+## Output and privacy
 
-All server-side dimension inspection goes through `api/_lib/raster.ts`. It checks PNG, JPEG, GIF or WebP magic bytes **before** calling the generic detector. All other formats, including JXL, HEIF and ICNS, are rejected. Unsupported image-size handlers are also explicitly disabled. Content-Type headers, URL extensions and browser MIME declarations do not grant admission. The returned parser type must match the admitted signature.
+SVG output embeds the original raster bytes, including metadata and pixels hidden by the shape. It must not be used to redact sensitive information. PNG export rasterizes the visible result and captures one frame of animated input. Public API responses are cached; do not use private or token-bearing source URLs.
 
-`tests/raster.test.ts` runs malformed unsupported samples in child processes with a parent-enforced timeout. This catches synchronous hangs rather than relying on a timer in the blocked event loop. Valid PNG/JPEG/GIF/WebP dimensions and JPEG orientation remain covered by the test suite. Existing byte, dimension, DNS, redirect and request-deadline limits are retained.
+## Dependency checks
 
-This is an application-level mitigation for these specific vulnerable parser paths, **not an upstream library fix or a claim of zero vulnerabilities**. `yarn audit` still reports the affected dependency. Do not suppress the advisories, enable additional formats or import `image-size` directly elsewhere without revisiting this boundary. A future maintained replacement or patched release should be assessed separately and verified against the existing image and compatibility tests.
-
-## Image privacy
-
-SVG output embeds the complete original raster, including hidden pixels and metadata. It is not a redaction tool. PNG exports rasterize the visible result. Public embeds are cached publicly; do not use private or signed URLs. Local files are processed in the browser and are never uploaded.
+CI runs `npm ci` and `npm audit` against the committed lockfile, including development dependencies. npm install scripts are permitted only for the pinned esbuild release; unreviewed scripts fail installation. Passing an audit checks known advisories at that time, not the absence of all vulnerabilities.

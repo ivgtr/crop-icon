@@ -6,35 +6,101 @@ on:
 permissions:
   contents: read
 jobs:
-  inspect:
+  finalize:
+    if: github.ref == 'refs/heads/refactor/crop-icon-maintenance'
+    permissions:
+      contents: write
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7.0.0
         with:
           node-version: 24
-      - name: Inspect stable releases
+      - name: Complete the reviewed typo migration and fixtures
         run: |
-          node --version
-          npm --version
-          for package in npm pnpm typescript esbuild @playwright/test @types/node @vercel/node image-size; do
-            echo "=== $package ==="
-            npm view "$package@latest" version engines --json
-          done
-      - name: Prepare a dependency snapshot for verification
+          python3 - <<'PY'
+          from pathlib import Path
+          r = Path('.')
+          paths = list(r.glob('api/**/*.ts')) + [r / 'tests' / name for name in ['core.test.ts', 'api.test.ts', 'html.test.ts', 'e2e/studio.spec.ts']]
+          for p in paths:
+              s = p.read_text().replace('perser', 'parser')
+              if p.name == 'core.ts':
+                  s = s.replace("'hart' | 'heart'", "'heart'")
+                  s = s.replace("return value === 'heart' || PATTERNS.some(pattern => pattern === value);", "return PATTERNS.some(pattern => pattern === value);")
+                  s = s.replace("pattern === 'hart' || pattern === 'heart'", "pattern === 'heart'")
+                  s = s.replace('and misspelled hart geometry', 'and heart geometry')
+              s = s.replace('hart', 'heart')
+              s = s.replace("p === 'heart' || p === 'heart' ? 'Heart' : ", '')
+              s = s.replace("(pattern === 'heart' ? 'heart' : pattern)", 'pattern')
+              s = s.replace('pattern === "heart" ? "Heart" : ', '')
+              if p.name == 'core.ts':
+                  start = s.index('export type Pattern =')
+                  end = s.index('\n', start)
+                  s = s[:start] + 'export type Pattern = typeof PATTERNS[number];' + s[end:]
+              if p.name == 'core.test.ts':
+                  s = s.replace("test('legacy heart preserves its width-based geometry; heart is an exact alias', () => {\n  assert.equal(shapeMarkup('heart', 320, 200), shapeMarkup('heart', 320, 200));", "test('heart preserves its width-based geometry without accepting the old typo', () => {\n  assert.throws(() => parseOptions({ ...base, p: 'hart' }), /Unknown shape/);")
+              if p.name == 'api.test.ts':
+                  s = s.replace("'url=https://example.com&p=bad',", "'url=https://example.com&p=bad', 'url=https://example.com&p=hart',")
+              p.write_text(s)
+          p = r / 'api/_lib/perser.ts'
+          p.write_text(p.read_text().replace('// Preserve the original module/entry-point names; share validation with the editor.', '// Share request validation with the editor.'))
+          p.rename(r / 'api/_lib/parser.ts')
+          p = r / 'tests/e2e/studio.spec.ts'
+          s = p.read_text().replace('PNG, JPEG, GIF, WEBP', 'PNG, JPEG, GIF, WEBP, PROGRESSIVE_JPEG, LOSSLESS_WEBP, ALPHA_WEBP, ANIMATED_WEBP, ROTATED_JPEG')
+          s = s.replace("['fixture.gif', 'image/gif', GIF], ['fixture.webp', 'image/webp', WEBP],", "['fixture.gif', 'image/gif', GIF], ['progressive.jpg', 'image/jpeg', PROGRESSIVE_JPEG],\n    ['lossless.webp', 'image/webp', LOSSLESS_WEBP], ['alpha.webp', 'image/webp', ALPHA_WEBP],\n    ['animated.webp', 'image/webp', ANIMATED_WEBP], ['fixture.webp', 'image/webp', WEBP],")
+          s += "\ntest('JPEG EXIF dimensions agree with the browser', async ({ page }) => {\n  await openStudio(page);\n  await page.locator('#file').setInputFiles({ name: 'rotated.jpg', mimeType: 'image/jpeg', buffer: ROTATED_JPEG });\n  await expect(page.locator('#source-info')).toContainText('16 × 32');\n  await expect(page.locator('#download-png')).toBeEnabled();\n});\n"
+          p.write_text(s)
+          fixtures = {
+              'PROGRESSIVE_JPEG': '/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wgARCAAQACADASIAAhEBAxEB/8QAFQABAQAAAAAAAAAAAAAAAAAAAAL/xAAWAQEBAQAAAAAAAAAAAAAAAAAABQb/2gAMAwEAAhADEAAAAZEzRAf/xAAUEAEAAAAAAAAAAAAAAAAAAAAw/9oACAEBAAEFAg//xAAUEQEAAAAAAAAAAAAAAAAAAAAQ/9oACAEDAQE/AT//xAAUEQEAAAAAAAAAAAAAAAAAAAAQ/9oACAECAQE/AT//xAAUEAEAAAAAAAAAAAAAAAAAAAAw/9oACAEBAAY/Ag//xAAUEAEAAAAAAAAAAAAAAAAAAAAw/9oACAEBAAE/IQ//2gAMAwEAAgADAAAAEPvv/8QAFBEBAAAAAAAAAAAAAAAAAAAAEP/aAAgBAwEBPxA//8QAFBEBAAAAAAAAAAAAAAAAAAAAEP/aAAgBAgEBPxA//8QAFBABAAAAAAAAAAAAAAAAAAAAMP/aAAgBAQABPxAP/9k=',
+              'LOSSLESS_WEBP': 'UklGRh4AAABXRUJQVlA4TBEAAAAvH8ADAAdQqqZXpv+BiOh/AAA=',
+              'ALPHA_WEBP': 'UklGRnIAAABXRUJQVlA4WAoAAAAQAAAAHwAADwAAQUxQSBIAAAABDzD/ERFCIJD4SzfAAhH9T91WUDggOgAAABADAJ0BKiAAEAA+bSyRRaQioZgEAEAGxKAHYA/AABCKAAD+rhf//kFywuuRr//7B384D84D+igAAAA=',
+              'ANIMATED_WEBP': 'UklGRs4AAABXRUJQVlA4WAoAAAACAAAAHwAADwAAQU5JTQYAAAAAAAAAAABBTk1GVAAAAAAAAAAAAB8AAA8AAGQAAAJWUDggPAAAABADAJ0BKiAAEAA+bSySRaQioZgEAEAGxKAHYA/AABC+AAD+rhf//kFywuuRr//7B384D84D+mDWYAAAAEFOTUZGAAAAAAAAAAAAHwAADwAAZAAAAFZQOCAuAAAAdAIAnQEqIAAQAD5tLJNFgwCAAADYlnALsALbEAD++iGQTdh3cn5pf+dml3gAAA=='
+          }
+          p = r / 'tests/fixtures.ts'
+          with p.open('a') as f:
+              for name, value in fixtures.items():
+                  f.write(f"export const {name} = Buffer.from('{value}', 'base64');\n")
+          (r / 'yarn.lock').unlink()
+          PY
+      - name: Generate and clean-install the npm 12 lockfile
         run: |
-          npm install --global npm@latest
-          npm pkg delete packageManager engines.yarn
-          npm pkg set engines.node=24.x
-          npm install --save-dev --save-exact typescript@latest esbuild@latest @playwright/test@latest @types/node@24
+          npm install --global npm@12.0.2
+          test "$(npm --version)" = 12.0.2
+          npm install --package-lock-only
+          sha256sum package-lock.json > /tmp/maintenance-lock.sha256
+          npm ci --include=dev
           npm ls --depth=0
-          npm audit --json > dependency-audit.json || test "$?" = 1
-          tar --exclude=.git --exclude=.github/workflows/maintenance-bootstrap.yml -czf /tmp/maintenance-snapshot.tar.gz .
-      - uses: actions/upload-artifact@v4
+          npm audit
+          npm run check
+      - name: Verify real browser behavior
+        run: |
+          npm exec -- playwright install --with-deps chromium
+          npm run test:e2e
+          sha256sum -c /tmp/maintenance-lock.sha256
+          git diff --check
+      - name: Commit only the maintenance branch, without force
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          test "$GITHUB_REF" = refs/heads/refactor/crop-icon-maintenance
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add api tests package-lock.json yarn.lock
+          git commit -m 'refactor: remove typo aliases and lock the verified npm dependency tree'
+          auth="$(printf 'x-access-token:%s' "$GH_TOKEN" | base64 -w0)"
+          git -c "http.https://github.com/.extraheader=AUTHORIZATION: basic $auth" push origin HEAD:refs/heads/refactor/crop-icon-maintenance
+      - name: Export verification snapshot
+        if: always()
+        run: tar --exclude=.git --exclude=node_modules --exclude=build --exclude=api/_lib/generated --exclude=test-results --exclude=playwright-report -czf /tmp/maintenance-final.tar.gz .
+      - uses: actions/upload-artifact@v7.0.1
+        if: always()
         with:
-          name: maintenance-snapshot
-          path: /tmp/maintenance-snapshot.tar.gz
+          name: maintenance-final
+          path: |
+            /tmp/maintenance-final.tar.gz
+            playwright-report
+            test-results
           retention-days: 1

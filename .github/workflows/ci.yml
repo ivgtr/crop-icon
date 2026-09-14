@@ -12,22 +12,20 @@ jobs:
   check:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7.0.1
         with:
           persist-credentials: false
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7.0.0
         with:
-          node-version: 22
-          cache: yarn
-          cache-dependency-path: yarn.lock
-      - name: Use the pinned Yarn Classic version
-        run: |
-          corepack enable
-          corepack prepare yarn@1.22.22 --activate
-          test "$(yarn --version)" = "1.22.22"
+          node-version: 24
+          cache: npm
+          cache-dependency-path: package-lock.json
+      - name: Use the pinned npm version
+        run: npm install --global npm@12.0.2
       - name: Install the locked dependency tree
-        run: yarn install --frozen-lockfile --non-interactive --production=false
+        run: npm ci --include=dev
+      - run: npm audit
       - name: Build and test all TypeScript sources
-        run: yarn run check
+        run: npm run check
       - name: Ensure installation did not rewrite the lockfile
-        run: git diff --exit-code -- yarn.lock
+        run: git diff --exit-code -- package-lock.json
