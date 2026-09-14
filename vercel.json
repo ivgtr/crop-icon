@@ -1,9 +1,12 @@
 {
+  "$schema": "https://openapi.vercel.sh/vercel.json",
   "version": 2,
-  "redirects": [
-    {
-      "source": "/",
-      "destination": "/api"
-    }
-  ]
+  "buildCommand": "npm run build",
+  "outputDirectory": "public",
+  "functions": { "api/index.ts": { "maxDuration": 15, "includeFiles": "public/index.html" } },
+  "rewrites": [{ "source": "/", "destination": "/api" }],
+  "headers": [{ "source": "/(.*)", "headers": [
+    { "key": "X-Content-Type-Options", "value": "nosniff" },
+    { "key": "Referrer-Policy", "value": "no-referrer" }
+  ] }]
 }

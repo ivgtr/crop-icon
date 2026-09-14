@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Give images a new shape. Make avatars, stickers and game tokens, then download or embed them with one URL.">
+  <title>crop-icon — a new shape for your image</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23f15a35'/%3E%3Cpath d='M18 10v36h36M10 18h36v36' fill='none' stroke='%231d2522' stroke-width='7'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/style.css">
+  <script type="module" src="/app.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/" aria-label="crop-icon home"><svg viewBox="0 0 32 32" aria-hidden="true"><path d="M9 2v21h21M2 9h21v21"/></svg>crop-icon<span class="brand-dot">.</span></a>
+    <span class="header-note">SMALL TOOL. DIFFERENT SHAPES.</span>
+    <a class="repo" href="https://github.com/ivgtr/crop-icon" target="_blank" rel="noopener noreferrer">Source code ↗</a>
+  </header>
+  <main>
+    <section class="intro">
+      <p class="eyebrow">A LITTLE LESS SQUARE</p>
+      <h1>A new shape<br>for your image<span>.</span></h1>
+      <p>Avatars, stickers, game tokens.<br>Make a cut. Find a fit. Take it anywhere.</p>
+    </section>
+    <div class="studio">
+      <aside class="controls" aria-label="Image editor">
+        <section class="control-section">
+          <h2><span>01</span> Bring an image</h2>
+          <form id="source-form">
+            <label for="url">Public image URL</label>
+            <div class="input-action"><input id="url" name="url" type="url" placeholder="https://…/image.png" autocomplete="off" spellcheck="false"><button id="load" type="submit">Load ↗</button></div>
+          </form>
+          <label id="drop-zone" class="drop-zone" for="file"><span class="upload-mark" aria-hidden="true">＋</span><strong>Choose or drop an image</strong><span>PNG, JPG, GIF, WebP · up to 3 MiB</span><input id="file" type="file" accept="image/png,image/jpeg,image/gif,image/webp"></label>
+          <p id="privacy" class="hint">Demo image · try a shape to get started</p>
+        </section>
+        <section class="control-section">
+          <h2><span>02</span> Make the cut</h2>
+          <div id="shapes" class="shapes" role="group" aria-label="Crop shape"></div>
+        </section>
+        <section class="control-section">
+          <div class="section-title"><h2><span>03</span> Find the fit</h2><button id="reset" class="text-button" type="button">Reset</button></div>
+          <form id="options">
+            <div class="two-columns">
+              <label>Width<input id="width" name="width" type="number" min="1" max="4096" step="1" value="512" required></label>
+              <label>Height<input id="height" name="height" type="number" min="1" max="4096" step="1" value="512" required></label>
+            </div>
+            <label class="select-row" for="fit">Image fit<select id="fit" name="fit"><option value="cover">Fill the shape</option><option value="contain">Keep the whole image</option></select></label>
+            <label class="range-label" for="zoom">Zoom <output id="zoom-value" for="zoom">1×</output></label><input id="zoom" name="zoom" type="range" min="1" max="4" step="0.05" value="1">
+            <label class="range-label" for="x">Horizontal position <output id="x-value" for="x">50%</output></label><input id="x" name="x" type="range" min="0" max="100" value="50">
+            <label class="range-label" for="y">Vertical position <output id="y-value" for="y">50%</output></label><input id="y" name="y" type="range" min="0" max="100" value="50">
+            <p class="hint">Position moves the image when it overflows or leaves space.</p>
+            <label class="range-label" for="border">Inside border <output id="border-value" for="border">0 px</output></label><input id="border" name="border" type="range" min="0" max="64" value="0">
+            <div class="colors"><label for="color">Border<input id="color" name="color" type="color" value="#ffffff"></label><label for="bg">Background<input id="bg" name="bg" type="color" value="#f5e8cc"></label></div>
+            <label class="checkbox"><input id="transparent" type="checkbox" checked> Transparent background</label>
+          </form>
+        </section>
+      </aside>
+      <div class="workspace">
+        <section class="preview-panel" aria-labelledby="preview-title">
+          <div class="preview-toolbar"><h2 id="preview-title">The cutting room</h2><span id="dimensions" class="badge">512 × 512</span></div>
+          <div class="presets" role="group" aria-label="Starting points"><span>START WITH</span><button type="button" data-preset="avatar">Avatar</button><button type="button" data-preset="sticker">README sticker</button><button type="button" data-preset="token">Game token</button></div>
+          <div id="preview-area" class="preview-area" aria-busy="false">
+            <figure class="original"><div class="image-stage"><img id="original" alt="Original image" draggable="false"></div><figcaption>BEFORE <span>Original</span></figcaption></figure>
+            <div class="preview-arrow" aria-hidden="true">↗</div>
+            <figure class="result"><div class="image-stage checker"><img id="result" alt="Cropped image preview" draggable="false"></div><figcaption>AFTER <span id="shape-label">Circle</span></figcaption></figure>
+          </div>
+          <div class="preview-footer"><span>YOUR IMAGE, WITH A LITTLE CHARACTER.</span><span id="source-info">On-device preview</span></div>
+        </section>
+        <section class="export-panel" aria-labelledby="export-title">
+          <div class="export-heading"><div><p class="eyebrow">04 / TAKE IT ANYWHERE</p><h2 id="export-title">Made to leave this page.</h2></div><div class="downloads"><button id="download-svg" type="button">SVG ↓</button><button id="download-png" class="primary" type="button">PNG ↓</button></div></div>
+          <label for="embed">Live image URL</label><textarea id="embed" rows="3" readonly spellcheck="false" aria-describedby="embed-hint" placeholder="Load a public image URL to create a live embed. Local images can be downloaded instead."></textarea>
+          <div class="copy-actions"><button id="copy-url" type="button" disabled>Copy URL</button><button id="copy-md" type="button" disabled>Markdown</button><button id="copy-html" type="button" disabled>HTML</button><button id="copy-editor" type="button" disabled>Edit link ↗</button></div>
+          <p id="embed-hint" class="hint">Use a public URL for live embeds. Local files stay on your device; download them as SVG or PNG.</p>
+        </section>
+        <p id="status" class="status" role="status" aria-live="polite">Pick a shape. The demo is ready to play with.</p>
+        <details class="api-note"><summary>Already using the API? Nothing to migrate.</summary><p><code>/api?url=…</code>, <code>p=circle|hart|star</code>, <code>width</code> and <code>height</code> still work. Old URLs keep their natural dimensions and contain fit. New controls are optional URL parameters. Embeds refresh through a 24-hour cache; downloads are snapshots.</p><p>Raster input only, up to 3 MiB / 40 megapixels. SVG downloads keep the embedded source; PNG captures a single frame. Keep source URLs public and stable.</p></details>
+      </div>
+    </div>
+  </main>
+  <footer><span>crop-icon / by <a href="https://github.com/ivgtr">ivgtr</a></span><span>NO ACCOUNT. NO UPLOAD FOR LOCAL FILES.</span></footer>
+  <noscript>This editor needs JavaScript. The image API still works: /api?url=YOUR_PUBLIC_IMAGE_URL</noscript>
+</body>
+</html>
