@@ -2,8 +2,9 @@ import { lookup } from 'node:dns/promises';
 import { get as httpGet, type IncomingMessage } from 'node:http';
 import { get as httpsGet } from 'node:https';
 import { BlockList, isIP } from 'node:net';
+import { MAX_BYTES, MAX_PIXELS, type Source } from './model.js';
 import { rasterDimensions } from './raster.js';
-import { MAX_BYTES, MAX_PIXELS, validateUrl, type Source } from './core.js';
+import { validateUrl } from './url.js';
 
 export class SourceError extends Error {
   constructor(public readonly code: string) { super(code); }
