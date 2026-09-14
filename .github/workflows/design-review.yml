@@ -1,0 +1,31 @@
+name: Design review workspace
+on:
+  push:
+    branches: [feat/result-first-demo]
+    paths: [.github/workflows/design-review.yml]
+permissions:
+  contents: read
+jobs:
+  workspace:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v7.0.0
+        with:
+          node-version: 24
+      - run: npm install --global npm@12.0.2
+      - run: npm ci --include=dev
+      - run: npm run build
+      - name: Prepare offline browser review
+        run: |
+          mkdir -p /tmp/design-review
+          curl --fail --location https://github.com/ivgtr.png -o /tmp/design-review/default.png
+          tar --exclude=.git -czf /tmp/design-review/workspace.tar.gz .
+      - uses: actions/upload-artifact@v7.0.1
+        with:
+          name: design-review-workspace
+          path: /tmp/design-review
+          retention-days: 1
