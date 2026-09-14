@@ -73,6 +73,8 @@ test('Vercel static output is empty and cannot expose compiled server modules', 
   assert.equal(config.outputDirectory, 'build/static');
   assert.deepEqual(readdirSync(config.outputDirectory), []);
   assert.equal(config.buildCommand, 'npm run build');
+  const pkg = JSON.parse(readFileSync('package.json', 'utf8'));
+  assert.equal(pkg.scripts['vercel-build'], 'npm run build');
   assert.equal(config.functions['api/index.ts'].includeFiles, undefined);
   for (const path of ['/', '/index.html']) assert.ok(config.rewrites.some((r: { source: string; destination: string }) => r.source === path && r.destination === '/api'));
 });
