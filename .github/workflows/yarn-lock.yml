@@ -1,0 +1,34 @@
+name: Generate Yarn lockfile
+on:
+  pull_request:
+    paths: [.github/workflows/yarn-lock.yml]
+permissions:
+  contents: read
+jobs:
+  lockfile:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Use Yarn Classic
+        run: |
+          corepack enable
+          corepack prepare yarn@1.22.22 --activate
+          yarn --version
+      - name: Generate from the current dependency declarations
+        run: |
+          rm package-lock.json
+          yarn install --non-interactive
+      - name: Report the generated lockfile
+        run: |
+          echo 'BEGIN_GENERATED_YARN_LOCK'
+          cat yarn.lock
+          echo 'END_GENERATED_YARN_LOCK'
+          sha256sum yarn.lock
+      - name: Report dependency audit
+        continue-on-error: true
+        run: yarn audit --json
