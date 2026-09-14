@@ -26,11 +26,13 @@ async function download(page: Page, extension: 'svg' | 'png'): Promise<Buffer> {
   return readFile(path!);
 }
 
-async function waitForRenderedZoom(page: Page, zoom: string): Promise<string> {
+async function waitForRenderedOptions(page: Page, fit: string, zoom: string): Promise<string> {
   await expect.poll(async () => {
     const value = await page.locator('#embed').inputValue();
-    return value ? new URL(value).searchParams.get('zoom') : null;
-  }).toBe(zoom);
+    if (!value) return null;
+    const params = new URL(value).searchParams;
+    return `${params.get('fit')}:${params.get('zoom')}`;
+  }).toBe(`${fit}:${zoom}`);
   return page.locator('#embed').inputValue();
 }
 
@@ -42,8 +44,9 @@ test('zoom-out uses shared limits in the editor, embed URL, edit link and PNG ex
   const zoom = page.locator('#zoom');
   await expect(zoom).toHaveAttribute('min', String(MIN_ZOOM));
   await expect(zoom).toHaveAttribute('max', String(MAX_ZOOM));
+  await page.locator('#fit').selectOption('contain');
   await zoom.fill('0.5');
-  const embed = await waitForRenderedZoom(page, '0.5');
+  const embed = await waitForRenderedOptions(page, 'contain', '0.5');
   await expect(page.locator('#zoom-value')).toHaveText('0.5×');
 
   const svg = (await download(page, 'svg')).toString('utf8');
@@ -54,12 +57,15 @@ test('zoom-out uses shared limits in the editor, embed URL, edit link and PNG ex
 
   await page.locator('#copy-editor').click();
   const editLink = await page.evaluate(() => navigator.clipboard.readText());
-  expect(new URLSearchParams(new URL(editLink).hash.slice(1)).get('zoom')).toBe('0.5');
+  const editParams = new URLSearchParams(new URL(editLink).hash.slice(1));
+  expect(editParams.get('fit')).toBe('contain');
+  expect(editParams.get('zoom')).toBe('0.5');
 
   const shared = await context.newPage();
   await shared.goto(editLink);
+  await expect(shared.locator('#fit')).toHaveValue('contain');
   await expect(shared.locator('#zoom')).toHaveValue('0.5');
-  await waitForRenderedZoom(shared, '0.5');
+  await waitForRenderedOptions(shared, 'contain', '0.5');
   await expect(shared.locator('#download-svg')).toBeEnabled();
   const sharedSvg = (await download(shared, 'svg')).toString('utf8');
   expect(sharedSvg).toContain('x="128" y="192" width="256" height="128"');
