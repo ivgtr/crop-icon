@@ -1,6 +1,6 @@
 import { createHash } from 'node:crypto';
 import type { IncomingMessage, ServerResponse } from 'node:http';
-import type { Source } from './_lib/core.js';
+import type { Source } from './_lib/model.js';
 import { html, inlineStyles } from './_lib/html.js';
 import { inlineScript } from './_lib/generated/editor.js';
 import { parseRequest } from './_lib/parser.js';
