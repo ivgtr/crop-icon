@@ -2,6 +2,34 @@ import { test, expect, type Page } from '@playwright/test';
 import { parseOptions, renderSvg } from '../../api/_lib/core.js';
 import { PNG } from '../fixtures.js';
 
+declare global {
+  interface Window {
+    cropTestBlobs: Map<string, Blob>;
+    cropTestRevoked: string[];
+  }
+}
+
+async function observeBlobs(page: Page): Promise<void> {
+  // Inspect created bytes without fetching blob: URLs, which connect-src excludes.
+  // Keep the real URL lifecycle and the production CSP intact.
+  await page.addInitScript(() => {
+    window.cropTestBlobs = new Map();
+    window.cropTestRevoked = [];
+    const create = URL.createObjectURL.bind(URL);
+    const revoke = URL.revokeObjectURL.bind(URL);
+    URL.createObjectURL = object => {
+      const url = create(object);
+      if (object instanceof Blob) window.cropTestBlobs.set(url, object);
+      return url;
+    };
+    URL.revokeObjectURL = url => {
+      window.cropTestRevoked.push(url);
+      window.cropTestBlobs.delete(url);
+      revoke(url);
+    };
+  });
+}
+
 async function openDemo(page: Page): Promise<void> {
   await page.route('**/api?*', route => route.fulfill({
     contentType: 'image/svg+xml',
@@ -34,6 +62,7 @@ test('results and downloads precede settings; en/ja fit narrow and wide screens'
 });
 
 test('shape thumbnails share crop geometry and update without more source requests', async ({ page }) => {
+  await observeBlobs(page);
   const requests: string[] = [];
   page.on('request', request => { if (/\/api\?/.test(request.url())) requests.push(request.url()); });
   await openDemo(page);
@@ -49,7 +78,9 @@ test('shape thumbnails share crop geometry and update without more source reques
   const geometry = await page.evaluate(async () => {
     const read = async (selector: string) => {
       const image = document.querySelector<HTMLImageElement>(selector)!;
-      const svg = new DOMParser().parseFromString(await (await fetch(image.src)).text(), 'image/svg+xml');
+      const blob = window.cropTestBlobs.get(image.src);
+      if (!blob) throw new Error('Missing generated preview Blob.');
+      const svg = new DOMParser().parseFromString(await blob.text(), 'image/svg+xml');
       return {
         viewBox: svg.documentElement.getAttribute('viewBox'),
         shape: svg.querySelector('clipPath')!.innerHTML,
@@ -67,6 +98,7 @@ test('shape thumbnails share crop geometry and update without more source reques
 });
 
 test('source failures clear comparison images and a local file restores them', async ({ page }) => {
+  await observeBlobs(page);
   await openDemo(page);
   const previous = await page.locator('[data-shape-preview="circle"]').getAttribute('src');
   await page.route('**/api?*', route => route.fulfill({ status: 404, body: '' }));
@@ -74,9 +106,7 @@ test('source failures clear comparison images and a local file restores them', a
   await expect(page.locator('#download-png')).toBeDisabled();
   await expect(page.locator('#shapes img:not([hidden])')).toHaveCount(0);
   await expect(page.locator('#shapes svg:not([hidden])')).toHaveCount(11);
-  expect(await page.evaluate(async url => {
-    try { await fetch(url!); return true; } catch { return false; }
-  }, previous)).toBe(false);
+  expect(await page.evaluate(url => window.cropTestRevoked.includes(url!), previous)).toBe(true);
   await page.locator('#file').setInputFiles({ name: 'local.png', mimeType: 'image/png', buffer: PNG });
   await expect(page.locator('#download-png')).toBeEnabled();
   await expect(page.locator('#shapes img:not([hidden])')).toHaveCount(11);
