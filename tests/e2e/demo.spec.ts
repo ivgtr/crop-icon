@@ -1,4 +1,5 @@
 import { test, expect, type Page, type Route } from '@playwright/test';
+import { readFile } from 'node:fs/promises';
 import { PNG } from '../fixtures.js';
 import { parseOptions, renderSvg } from '../../api/_lib/core.js';
 import { en } from '../../api/_lib/locales/en.js';
@@ -13,8 +14,14 @@ async function openDemo(page: Page, path = '/'): Promise<void> {
   await page.goto(path);
   await expect(page.locator('#download-svg')).toBeEnabled();
 }
-async function previewSvg(page: Page): Promise<string> {
-  return page.locator('#result').evaluate(async (image: HTMLImageElement) => (await fetch(image.src)).text());
+async function downloadSvg(page: Page): Promise<string> {
+  const received = page.waitForEvent('download');
+  await page.locator('#download-svg').click();
+  const file = await received;
+  expect(await file.failure()).toBeNull();
+  const path = await file.path();
+  expect(path).not.toBeNull();
+  return readFile(path!, 'utf8');
 }
 
 test('language changes preserve local source, edits and SVG, without making network requests', async ({ page }, info) => {
@@ -30,7 +37,9 @@ test('language changes preserve local source, edits and SVG, without making netw
   await page.locator('#shapes [data-pattern="heart"]').click();
   await expect(page.locator('#dimensions')).toHaveText('128 × 96');
   await expect(page.locator('#shape-label')).toHaveText('Heart');
-  const before = await previewSvg(page);
+  const before = await downloadSvg(page);
+  const preview = await page.locator('#result').getAttribute('src');
+  expect(preview).not.toBeNull();
   const network: string[] = [];
   page.on('request', request => { if (/^https?:/.test(request.url())) network.push(request.url()); });
   await page.locator('#language').selectOption('ja');
@@ -48,12 +57,14 @@ test('language changes preserve local source, edits and SVG, without making netw
   await expect(page.locator('#height')).toHaveValue('96');
   await expect(page.locator('#fit')).toHaveValue('contain');
   await expect(page.locator('#copy-url')).toBeDisabled();
-  expect(await previewSvg(page)).toBe(before);
+  await expect(page.locator('#result')).toHaveAttribute('src', preview!);
+  expect(await downloadSvg(page)).toBe(before);
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
   await page.screenshot({ path: info.outputPath('studio-ja.png'), fullPage: true });
   await page.locator('#language').selectOption('en');
   await expect(page.locator('#shape-label')).toHaveText('Heart');
-  expect(await previewSvg(page)).toBe(before);
+  await expect(page.locator('#result')).toHaveAttribute('src', preview!);
+  expect(await downloadSvg(page)).toBe(before);
   expect(network).toEqual([]);
   expect(errors).toEqual([]);
 });
