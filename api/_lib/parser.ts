@@ -1,5 +1,5 @@
-import { parseOptions } from "./core.js";
+import { parseOptions } from './options.js';
 
-// Share request validation with the editor.
-export type { Options, Pattern as CropPattern } from "./core.js";
+// Preserve the original request-parser entry point while sharing one option schema.
+export type { Options, Pattern as CropPattern } from './model.js';
 export const parseRequest = parseOptions;

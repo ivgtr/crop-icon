@@ -1,12 +1,19 @@
 import { test, expect, type Page } from '@playwright/test';
 import { readFile } from 'node:fs/promises';
+import { parseOptions, renderSvg } from '../../api/_lib/core.js';
 import { PNG, JPEG, GIF, WEBP, PROGRESSIVE_JPEG, LOSSLESS_WEBP, ALPHA_WEBP, ANIMATED_WEBP, ROTATED_JPEG } from '../fixtures.js';
 
-async function openStudio(page: Page): Promise<void> {
+async function openStudio(page: Page, realSource = false): Promise<void> {
+  if (!realSource) {
+    await page.route('**/api?*', async route => {
+      const options = parseOptions(new URL(route.request().url()).searchParams);
+      await route.fulfill({ contentType: 'image/svg+xml', body: renderSvg({ data: `data:image/png;base64,${PNG.toString('base64')}`, width: 32, height: 16 }, options) });
+    });
+  }
   const response = await page.goto('/');
   expect(response?.status()).toBe(200);
   expect(response?.headers()['content-security-policy']).toContain("script-src 'sha256-");
-  await expect(page.locator('#download-svg')).toBeEnabled();
+  await expect(page.locator('#download-svg')).toBeEnabled({ timeout: 20000 });
   await expect.poll(() => page.locator('#result').evaluate((image: HTMLImageElement) => image.complete && image.naturalWidth > 0)).toBe(true);
 }
 
@@ -26,7 +33,8 @@ test('inline editor, all shapes and responsive layout work under CSP', async ({ 
   page.on('pageerror', error => errors.push(error.message));
   page.on('console', message => { if (message.type() === 'error' && /Content Security Policy|Refused to execute|Refused to apply/i.test(message.text())) errors.push(message.text()); });
   await openStudio(page);
-  await expect(page.locator('#copy-url')).toBeDisabled();
+  await expect(page.locator('#url')).toHaveValue('https://github.com/ivgtr.png');
+  await expect(page.locator('#copy-url')).toBeEnabled();
   const shapes = page.locator('#shapes button[data-pattern]');
   await expect(shapes).toHaveCount(11);
   for (const button of await shapes.all()) {
@@ -98,11 +106,16 @@ test('invalid inputs disable export and a valid file recovers', async ({ page })
   await expect(page.locator('#privacy')).toContainText('valid.png');
 });
 
-test('public GitHub image, live embeds and edit links work end to end', async ({ page, context, baseURL }) => {
-  await openStudio(page);
-  await page.locator('#url').fill('https://github.com/ivgtr.png');
-  await page.locator('#load').click();
-  await expect(page.locator('#status')).toContainText('Ready.', { timeout: 20000 });
+test('default public GitHub image, live embeds and edit links work end to end without mocks', async ({ page, context, baseURL }) => {
+  const loads: string[] = [];
+  page.on('request', request => {
+    const url = new URL(request.url());
+    if (url.pathname === '/api') loads.push(url.searchParams.get('url') ?? '');
+  });
+  await openStudio(page, true);
+  expect(loads).toEqual(['https://github.com/ivgtr.png']);
+  await expect(page.locator('#url')).toHaveValue('https://github.com/ivgtr.png');
+  await expect(page.locator('#status')).toContainText('Ready.');
   await expect(page.locator('#copy-url')).toBeEnabled();
   await page.locator('#width').fill('128');
   await page.locator('#height').fill('128');
