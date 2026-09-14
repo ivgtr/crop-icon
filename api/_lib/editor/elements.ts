@@ -5,6 +5,7 @@ function element<T extends HTMLElement>(id: string, type: { new(): T }): T {
   return node;
 }
 export const elements = {
+  language: element('language', HTMLSelectElement),
   'source-form': element('source-form', HTMLFormElement),
   options: element('options', HTMLFormElement),
   url: element('url', HTMLInputElement),
