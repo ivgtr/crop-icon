@@ -1,6 +1,7 @@
 import s from "./utils/style.js";
 import h, { text } from "./utils/tag.js";
 import { PATTERNS, shapeMarkup } from "./core.js";
+import { en, type MessageKey } from "./locales/en.js";
 import { inlineScript } from "./generated/editor.js";
 
 // The original h()/s() composition remains the source of the document and its styles.
@@ -20,12 +21,11 @@ export const inlineStyles = [
   s(".flex", { display: "flex", gap: "12px" }),
   s(".align-center", { alignItems: "center" }),
   s(".justify-center", { justifyContent: "center" }),
-  s(".topbar", { display: "flex", alignItems: "center", justifyContent: "space-between", gap: "20px", padding: "22px 0", borderBottom: "1px solid #d5d9d0" }),
+  s(".topbar", { display: "flex", flexWrap: "wrap", alignItems: "center", justifyContent: "space-between", gap: "20px", padding: "22px 0", borderBottom: "1px solid #d5d9d0" }),
   s(".brand", { display: "flex", alignItems: "center", gap: "10px", fontSize: "20px", fontWeight: "750", textDecoration: "none" }),
   s(".brand svg", { width: "30px", height: "30px", fill: "none", stroke: "currentColor", strokeWidth: "3" }),
-  s(".link", { display: "flex", flexWrap: "wrap", gap: "18px", fontSize: "13px" }),
+  s(".link", { display: "flex", flexWrap: "wrap", alignItems: "center", gap: "18px", fontSize: "13px" }),
   s(".intro", { padding: "30px 0 26px", maxWidth: "700px" }),
-  s(".eyebrow", { color: "#627067", fontSize: "11px", fontWeight: "700", letterSpacing: ".12em", marginBottom: "8px" }),
   s("h1", { fontSize: "clamp(28px, 4vw, 42px)", lineHeight: "1.15", letterSpacing: "-.04em", marginBottom: "14px" }),
   s(".intro p:last-child", { color: "#56645b", maxWidth: "580px" }),
   s(".studio", { display: "grid", gridTemplateColumns: "330px minmax(0, 1fr)", gap: "18px", alignItems: "start" }),
@@ -36,9 +36,10 @@ export const inlineStyles = [
   s(".control-section + .control-section", { borderTop: "1px solid #e5e7e0" }),
   s("h2", { fontSize: "16px", lineHeight: "1.4" }),
   s(".control-section h2", { marginBottom: "16px" }),
-  s(".control-section h2 > span", { color: "#8a928a", fontSize: "12px", marginRight: "10px", fontWeight: "500" }),
+  s(".control-section h2 > span:first-child", { color: "#8a928a", fontSize: "12px", marginRight: "10px", fontWeight: "500" }),
   s("label", { display: "block", fontSize: "12px", fontWeight: "600" }),
   s("input:not([type=range]):not([type=checkbox]):not([type=file]):not([type=color]), select, textarea", { width: "100%", minWidth: "0", padding: "9px 10px", backgroundColor: "#fafbf7", color: "inherit", marginTop: "5px" }),
+  s("select.language", { width: "auto", marginTop: "0", padding: "4px 8px" }),
   s(".input-action", { display: "flex", gap: "7px", alignItems: "end" }),
   s(".input-action input", { flex: "1", minWidth: "0" }),
   s(".input-action button", { flexShrink: "0" }),
@@ -69,15 +70,15 @@ export const inlineStyles = [
   s(".preview-toolbar, .presets, .preview-footer", { display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "10px", padding: "18px 22px" }),
   s(".badge, .mark", { display: "inline-block", borderRadius: "5px", backgroundColor: "#eef2e9", padding: "3px 8px", fontSize: "11px", fontVariantNumeric: "tabular-nums" }),
   s(".presets", { justifyContent: "flex-start", paddingTop: "0", fontSize: "11px" }),
-  s(".presets > span", { fontSize: "9px", letterSpacing: ".08em", color: "#627067" }),
+  s(".presets > span", { fontSize: "11px", color: "#627067" }),
   s(".presets button", { padding: "5px 9px" }),
   s(".preview-area", { display: "grid", gridTemplateColumns: "minmax(0, 1fr) 20px minmax(0, 1fr)", gap: "16px", alignItems: "center", padding: "30px 22px", backgroundColor: "#edf0e8", minHeight: "280px" }),
   s(".preview-area[aria-busy=true]", { opacity: ".5" }),
   s(".image-stage", { display: "flex", alignItems: "center", justifyContent: "center", width: "100%", aspectRatio: "1", maxWidth: "260px", margin: "0 auto", borderRadius: "8px", overflow: "hidden" }),
   s(".checker", { backgroundColor: "#fff", backgroundImage: "conic-gradient(#e1e5dd 25%, transparent 0 50%, #e1e5dd 0 75%, transparent 0)", backgroundSize: "16px 16px" }),
   s(".image-stage img", { display: "block", width: "100%", height: "100%", objectFit: "contain" }),
-  s("figcaption", { display: "flex", flexWrap: "wrap", gap: "8px", alignItems: "center", marginTop: "12px", color: "#61705f", fontSize: "9px", letterSpacing: ".07em" }),
-  s("figcaption span", { fontSize: "12px", color: "#25332e", letterSpacing: "0" }),
+  s("figcaption", { display: "flex", flexWrap: "wrap", gap: "8px", alignItems: "center", marginTop: "12px", color: "#61705f", fontSize: "12px" }),
+  s("figcaption span", { color: "#25332e" }),
   s(".preview-arrow", { fontSize: "22px", color: "#7a8775", textAlign: "center" }),
   s(".preview-footer", { padding: "12px 22px", fontSize: "10px", color: "#627067", overflowWrap: "anywhere" }),
   s(".export-panel", { padding: "22px" }),
@@ -115,93 +116,88 @@ export const inlineStyles = [
   ),
 ].join("\n");
 
-const shapeLabel = (pattern: string) => pattern[0].toUpperCase() + pattern.slice(1);
-const button = (id: string, label: string, disabled = false, className = "") =>
-  h("button", { id, type: "button", disabled, class: className || undefined }, text(label));
-const heading = (number: string, label: string) => h("h2", {}, h("span", {}, number), text(label));
-const range = (id: string, label: string, min: number, max: number, value: number, suffix: string, step = 1) =>
-  h("label", { class: "range-label", for: id }, text(label), h("output", { id: `${id}-value`, for: id }, text(`${value}${suffix}`))) +
+const message = (key: MessageKey, tag = "span", attributes: Parameters<typeof h>[1] = {}) =>
+  h(tag, { ...attributes, "data-i18n": key }, text(en[key]));
+const translatedAttribute = (attribute: string, key: MessageKey) => ({ [attribute]: en[key], [`data-i18n-${attribute}`]: key });
+const button = (id: string, key: MessageKey, disabled = false, className = "") =>
+  message(key, "button", { id, type: "button", disabled, class: className || undefined });
+const heading = (number: string, key: MessageKey) => h("h2", {}, h("span", {}, number), message(key));
+const range = (id: string, key: MessageKey, min: number, max: number, value: number, suffix: string, step = 1) =>
+  h("label", { class: "range-label", for: id }, message(key), h("output", { id: `${id}-value`, for: id }, text(`${value}${suffix}`))) +
   h("input", { id, name: id, type: "range", min, max, value, step });
-const field = (id: string, label: string) => h("label", { for: id }, text(label),
+const field = (id: string, key: MessageKey) => h("label", { for: id }, message(key),
   h("input", { id, name: id, type: "number", min: 1, max: 4096, step: 1, value: 512, required: true }));
+const defaultImageUrl = "https://github.com/ivgtr.png";
 
 function controls(): string {
-  return h("aside", { class: "controls", "aria-label": "Image editor" },
+  return h("aside", { class: "controls", ...translatedAttribute("aria-label", "editor") },
     h("section", { class: "control-section" },
-      heading("01", "Bring an image"),
+      heading("01", "image"),
       h("form", { id: "source-form" },
-        h("label", { for: "url" }, "Public image URL"),
+        message("publicUrl", "label", { for: "url" }),
         h("div", { class: "input-action" },
-          h("input", { id: "url", name: "url", type: "url", placeholder: "https://…/image.png", autocomplete: "off", spellcheck: "false" }),
-          h("button", { id: "load", type: "submit" }, "Load ↗"))),
+          h("input", { id: "url", name: "url", type: "url", value: defaultImageUrl, placeholder: "https://…/image.png", autocomplete: "off", spellcheck: "false" }),
+          h("button", { id: "load", type: "submit" }, text(en.load)))),
       h("label", { id: "drop-zone", class: "drop-zone", for: "file" },
-        h("strong", {}, "Choose or drop an image"), h("span", {}, "PNG, JPG, GIF, WebP · up to 3 MiB"),
+        message("chooseImage", "strong"), message("fileFormats"),
         h("input", { id: "file", type: "file", accept: "image/png,image/jpeg,image/gif,image/webp" })),
-      h("p", { id: "privacy", class: "hint" }, "Demo image · try a shape to get started")),
-    h("section", { class: "control-section" }, heading("02", "Make the cut"),
-      h("div", { id: "shapes", class: "shapes", role: "group", "aria-label": "Crop shape" },
+      h("p", { id: "privacy", class: "hint" })),
+    h("section", { class: "control-section" }, heading("02", "shape"),
+      h("div", { id: "shapes", class: "shapes", role: "group", ...translatedAttribute("aria-label", "cropShape") },
         ...PATTERNS.map(pattern => h("button", { type: "button", class: "shape", "data-pattern": pattern,
-          "aria-label": shapeLabel(pattern), "aria-pressed": String(pattern === "circle") },
-          h("svg", { viewBox: "0 0 100 100", "aria-hidden": "true" }, shapeMarkup(pattern, 100, 100)),
-          h("span", {}, shapeLabel(pattern)))))),
+          ...translatedAttribute("aria-label", pattern), "aria-pressed": String(pattern === "circle") },
+          h("svg", { viewBox: "0 0 100 100", "aria-hidden": "true" }, shapeMarkup(pattern, 100, 100)), message(pattern))))),
     h("section", { class: "control-section" },
-      h("div", { class: "section-title" }, heading("03", "Find the fit"), button("reset", "Reset", false, "text-button")),
+      h("div", { class: "section-title" }, heading("03", "sizePosition"), button("reset", "reset", false, "text-button")),
       h("form", { id: "options" },
-        h("div", { class: "two-columns" }, field("width", "Width"), field("height", "Height")),
-        h("label", { class: "select-row", for: "fit" }, "Image fit",
-          h("select", { id: "fit", name: "fit" },
-            h("option", { value: "cover" }, "Fill the shape"), h("option", { value: "contain" }, "Keep the whole image"))),
-        range("zoom", "Zoom", 1, 4, 1, "×", .05),
-        range("x", "Horizontal position", 0, 100, 50, "%"),
-        range("y", "Vertical position", 0, 100, 50, "%"),
-        h("p", { class: "hint" }, "Position moves the image when it overflows or leaves space."),
-        range("border", "Inside border", 0, 64, 0, " px"),
+        h("div", { class: "two-columns" }, field("width", "width"), field("height", "height")),
+        h("label", { class: "select-row", for: "fit" }, message("fit"),
+          h("select", { id: "fit", name: "fit" }, message("cover", "option", { value: "cover" }), message("contain", "option", { value: "contain" }))),
+        range("zoom", "zoom", 1, 4, 1, "×", .05),
+        range("x", "horizontal", 0, 100, 50, "%"),
+        range("y", "vertical", 0, 100, 50, "%"),
+        message("positionHint", "p", { class: "hint" }),
+        range("border", "insideBorder", 0, 64, 0, " px"),
         h("div", { class: "colors" },
-          h("label", { for: "color" }, "Border", h("input", { id: "color", name: "color", type: "color", value: "#ffffff" })),
-          h("label", { for: "bg" }, "Background", h("input", { id: "bg", name: "bg", type: "color", value: "#f5e8cc" }))),
-        h("label", { class: "checkbox" }, h("input", { id: "transparent", type: "checkbox", checked: true }), "Transparent background"))));
+          h("label", { for: "color" }, message("border"), h("input", { id: "color", name: "color", type: "color", value: "#ffffff" })),
+          h("label", { for: "bg" }, message("background"), h("input", { id: "bg", name: "bg", type: "color", value: "#f5e8cc" }))),
+        h("label", { class: "checkbox" }, h("input", { id: "transparent", type: "checkbox", checked: true }), message("transparent")))));
 }
 
 function preview(): string {
   return h("section", { class: "preview-panel", "aria-labelledby": "preview-title" },
-    h("div", { class: "preview-toolbar" }, h("h2", { id: "preview-title" }, "The cutting room"), h("span", { id: "dimensions", class: "badge" }, "512 × 512")),
-    h("div", { class: "presets", role: "group", "aria-label": "Starting points" }, h("span", {}, "START WITH"),
-      ...[["avatar", "Avatar"], ["sticker", "README sticker"], ["token", "Game token"]].map(([preset, label]) =>
-        h("button", { type: "button", "data-preset": preset }, label))),
+    h("div", { class: "preview-toolbar" }, message("preview", "h2", { id: "preview-title" }), h("span", { id: "dimensions", class: "badge" }, "512 × 512")),
+    h("div", { class: "presets", role: "group", ...translatedAttribute("aria-label", "presets") }, message("presets"),
+      ...(["avatar", "sticker", "token"] as const).map(preset => message(preset, "button", { type: "button", "data-preset": preset }))),
     h("div", { id: "preview-area", class: "preview-area", "aria-busy": "false" },
       h("figure", { class: "original" },
-        h("div", { class: "image-stage" }, h("img", { id: "original", alt: "Original image", draggable: "false" })),
-        h("figcaption", {}, "BEFORE", h("span", {}, "Original"))),
+        h("div", { class: "image-stage" }, h("img", { id: "original", ...translatedAttribute("alt", "originalAlt"), draggable: "false" })),
+        message("original", "figcaption")),
       h("div", { class: "preview-arrow", "aria-hidden": "true" }, "→"),
       h("figure", { class: "result" },
-        h("div", { class: "image-stage checker" }, h("img", { id: "result", alt: "Cropped image preview", draggable: "false" })),
-        h("figcaption", {}, "AFTER", h("span", { id: "shape-label" }, "Circle")))),
-    h("div", { class: "preview-footer" }, h("span", {}, "One source. A different shape."), h("span", { id: "source-info" }, "On-device preview")));
+        h("div", { class: "image-stage checker" }, h("img", { id: "result", ...translatedAttribute("alt", "resultAlt"), draggable: "false" })),
+        h("figcaption", {}, message("result"), h("span", { id: "shape-label" }, text(en.circle))))),
+    h("div", { class: "preview-footer" }, h("span", { id: "source-info" })));
 }
 
 function exportsPanel(): string {
   return h("section", { class: "export-panel", "aria-labelledby": "export-title" },
-    h("div", { class: "export-heading" },
-      h("div", {}, h("p", { class: "eyebrow" }, "04 / TAKE IT ANYWHERE"), h("h2", { id: "export-title" }, "Download or embed.")),
-      h("div", { class: "downloads" }, button("download-svg", "SVG ↓", true), button("download-png", "PNG ↓", true, "primary"))),
-    h("label", { for: "embed" }, "Live image URL"),
-    h("textarea", { id: "embed", rows: 3, readonly: true, spellcheck: "false", "aria-describedby": "embed-hint",
-      placeholder: "Load a public URL for a live embed. Local images can be downloaded." }),
-    h("div", { class: "copy-actions" }, button("copy-url", "Copy URL", true), button("copy-md", "Markdown", true), button("copy-html", "HTML", true), button("copy-editor", "Edit link ↗", true)),
-    h("p", { id: "embed-hint", class: "hint" }, "Local files stay on your device. A public URL is needed only for live embeds."));
+    h("div", { class: "export-heading" }, message("export", "h2", { id: "export-title" }),
+      h("div", { class: "downloads" }, button("download-svg", "downloadSvg", true), button("download-png", "downloadPng", true, "primary"))),
+    message("liveUrl", "label", { for: "embed" }),
+    h("textarea", { id: "embed", rows: 3, readonly: true, spellcheck: "false", "aria-describedby": "embed-hint", ...translatedAttribute("placeholder", "embedPlaceholder") }),
+    h("div", { class: "copy-actions" }, button("copy-url", "copyUrl", true), button("copy-md", "markdown", true), button("copy-html", "html", true), button("copy-editor", "editLink", true)),
+    message("embedHint", "p", { id: "embed-hint", class: "hint" }));
 }
 
 function usage(): string {
-  const sample = "https://crop-icon.vercel.app/api?url=https://github.com/ivgtr.png";
+  const sample = `https://crop-icon.vercel.app/api?url=${defaultImageUrl}`;
   return h("details", { id: "usage", class: "api-note" },
-    h("summary", {}, "Usage · the original API still works"),
-    h("p", {}, "Copy-paste this into your markdown content, and that's it. Simple!"),
+    message("apiUsage", "summary"), message("markdownHint", "p"),
     h("pre", {}, h("code", {}, text(`[![icon](${sample})](https://github.com/ivgtr)`))),
-    h("div", { class: "api-examples" }, ...["circle", "heart", "star"].map(pattern =>
-      h("a", { class: "mark", href: `/api?p=${pattern}&url=https://github.com/ivgtr.png`, target: "_blank", rel: "noopener noreferrer" }, pattern))),
-    h("p", {}, "Change ", h("code", {}, "url"), " to your image URL. ", h("code", {}, "p=circle|heart|star"),
-      ", width and height keep working. Existing URLs retain natural dimensions and centered contain fit; new controls are optional."),
-    h("p", {}, "Embeds refresh through a 24-hour cache. SVG retains the entire embedded source, including hidden pixels and metadata; do not use it for redaction. PNG is a visible, single-frame snapshot."));
+    h("div", { class: "api-examples" }, ...(["circle", "heart", "star"] as const).map(pattern =>
+      message(pattern, "a", { class: "mark", href: `/api?p=${pattern}&url=${defaultImageUrl}`, target: "_blank", rel: "noopener noreferrer" }))),
+    message("apiParameters", "p"), message("exportWarning", "p"));
 }
 
 export const html = (): string => {
@@ -210,25 +206,23 @@ export const html = (): string => {
     h("head", {},
       h("meta", { charset: "UTF-8" }),
       h("meta", { name: "viewport", content: "width=device-width, initial-scale=1.0" }),
-      h("meta", { name: "description", content: "Crop an image into a different shape. Download an avatar, sticker or game token, or embed it with the original image API." }),
-      h("title", {}, "crop-icon — a different shape"),
+      h("meta", { name: "description", ...translatedAttribute("content", "description") }), message("title", "title"),
       h("link", { rel: "icon", href: "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M9 2v21h21M2 9h21v21' fill='none' stroke='%23253f31' stroke-width='3'/%3E%3C/svg%3E" }),
       h("style", { id: "studio-style" }, inlineStyles)),
     h("body", {}, h("div", { class: "container" },
       h("header", { class: "topbar" },
-        h("a", { class: "brand", href: "/", "aria-label": "crop-icon home" },
+        h("a", { class: "brand", href: "/", ...translatedAttribute("aria-label", "home") },
           h("svg", { viewBox: "0 0 32 32", "aria-hidden": "true" }, h("path", { d: "M9 2v21h21M2 9h21v21" })), "crop-icon"),
-        h("nav", { class: "link", "aria-label": "Project links" }, h("a", { href: "#usage" }, "Usage"),
-          h("a", { href: "https://github.com/ivgtr/crop-icon", target: "_blank", rel: "noopener noreferrer" }, "GitHub ↗"))),
-      h("main", {},
-        h("section", { class: "intro" }, h("p", { class: "eyebrow" }, "SMALL IMAGE TOOL / NO ACCOUNT NEEDED"),
-          h("h1", {}, "One image. A different shape."),
-          h("p", {}, "Avatars, stickers, game tokens. Bring an image, make a cut, then download it or copy one URL into your Markdown.")),
-        h("noscript", {}, h("p", {}, "The editor needs JavaScript. The image API and the ", h("a", { href: "#usage" }, "Usage examples"), " below work without it.")),
+        h("nav", { class: "link", ...translatedAttribute("aria-label", "projectLinks") }, message("usage", "a", { href: "#usage" }),
+          h("a", { href: "https://github.com/ivgtr/crop-icon", target: "_blank", rel: "noopener noreferrer" }, "GitHub ↗"),
+          h("select", { id: "language", class: "language", ...translatedAttribute("aria-label", "language") },
+            h("option", { value: "en", lang: "en" }, "English"), h("option", { value: "ja", lang: "ja" }, "日本語")))),
+      h("main", {}, h("section", { class: "intro" }, message("introTitle", "h1"), message("introDescription", "p")),
+        h("noscript", {}, message("noScript", "p")),
         h("div", { class: "studio" }, controls(), h("div", { class: "workspace" }, preview(), exportsPanel(),
-          h("p", { id: "status", class: "status", role: "status", "aria-live": "polite" }, "Pick a shape. The demo is ready to play with."), usage()))),
+          h("p", { id: "status", class: "status", role: "status", "aria-live": "polite" }, text(en.loadingSource)), usage()))),
       h("footer", {}, h("span", {}, "crop-icon / MIT © ", h("a", { href: "https://github.com/ivgtr" }, "ivgtr")),
-        h("span", {}, "Questions or ideas? ", h("a", { href: "https://github.com/ivgtr/crop-icon" }, "GitHub"), " · ", h("a", { href: "https://twitter.com/ivgtr" }, "X")))),
+        h("span", {}, h("a", { href: "https://github.com/ivgtr/crop-icon" }, "GitHub"), " · ", h("a", { href: "https://twitter.com/ivgtr" }, "X")))),
       h("script", { id: "studio-script" }, inlineScript)));
   return head + element;
 };
