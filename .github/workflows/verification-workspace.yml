@@ -1,11 +1,13 @@
-name: PR verification workspace
+name: Browser verification
 on:
   pull_request:
-    paths: [.github/workflows/verification-workspace.yml]
 permissions:
   contents: read
+concurrency:
+  group: browser-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
-  workspace:
+  browser:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
@@ -15,17 +17,32 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Install the declared dependencies and validate
+      - name: Use Yarn Classic
         run: |
           corepack enable
           corepack prepare yarn@1.22.22 --activate
-          yarn install --frozen-lockfile --non-interactive --production=false
-          yarn run check
-          git diff --exit-code -- yarn.lock
-      - name: Package the tested sources and build tools
-        run: tar --exclude=.git -czf /tmp/validation-workspace.tar.gz .
+      - name: Resolve the newly added browser dependency
+        run: |
+          yarn install --non-interactive --production=false
+          echo BEGIN_BROWSER_LOCK
+          cat yarn.lock
+          echo END_BROWSER_LOCK
+      - run: yarn run check
+      - run: yarn exec playwright install --with-deps chromium
+      - name: Browser tests against the production handler
+        run: yarn run test:e2e
+      - name: Browser tests against Vercel Preview
+        if: always()
+        env:
+          E2E_BASE_URL: https://crop-icon-git-refactor-crop-icon-studio-ivgtrs-projects.vercel.app
+        run: yarn run test:e2e --output=test-results-preview --reporter=list
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
-          name: verification-workspace
-          path: /tmp/validation-workspace.tar.gz
-          retention-days: 1
+          name: browser-verification
+          path: |
+            yarn.lock
+            playwright-report
+            test-results
+            test-results-preview
+          retention-days: 7
