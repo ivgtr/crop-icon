@@ -16,13 +16,9 @@ async function installImageRoute(context: BrowserContext): Promise<void> {
   await context.route('**/api?*', imageResponse);
 }
 
-async function previewSvg(page: Page): Promise<string> {
-  return page.locator('#result').evaluate(async (image: HTMLImageElement) => (await fetch(image.src)).text());
-}
-
-async function downloadPng(page: Page): Promise<Buffer> {
+async function download(page: Page, extension: 'svg' | 'png'): Promise<Buffer> {
   const received = page.waitForEvent('download');
-  await page.locator('#download-png').click();
+  await page.locator(`#download-${extension}`).click();
   const file = await received;
   expect(await file.failure()).toBeNull();
   const path = await file.path();
@@ -41,7 +37,7 @@ test('zoom-out uses shared limits in the editor, embed URL, edit link and PNG ex
   await zoom.fill('0.5');
   await expect(page.locator('#zoom-value')).toHaveText('0.5×');
 
-  const svg = await previewSvg(page);
+  const svg = (await download(page, 'svg')).toString('utf8');
   expect(svg).toContain('x="128" y="192" width="256" height="128"');
 
   const embed = await page.locator('#embed').inputValue();
@@ -56,9 +52,10 @@ test('zoom-out uses shared limits in the editor, embed URL, edit link and PNG ex
   const shared = await context.newPage();
   await shared.goto(editLink);
   await expect(shared.locator('#zoom')).toHaveValue('0.5');
-  expect(await previewSvg(shared)).toContain('x="128" y="192" width="256" height="128"');
+  const sharedSvg = (await download(shared, 'svg')).toString('utf8');
+  expect(sharedSvg).toContain('x="128" y="192" width="256" height="128"');
 
-  const png = await downloadPng(page);
+  const png = await download(page, 'png');
   const alpha = await page.evaluate(async data => {
     const image = new Image();
     image.src = data;
