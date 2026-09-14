@@ -58,7 +58,8 @@ test('the server document contains each editor hook exactly once', () => {
 test('original Markdown examples, shape names and project links work without JavaScript', () => {
   const page = markup();
   assert.match(page, /<noscript>/);
-  assert.match(page, /Copy-paste this into your markdown/);
+  assert.match(page, /<pre><code>\[!\[icon\]/);
+  assert.match(page, /href="https:\/\/github.com\/ivgtr\/crop-icon#api"/);
   for (const pattern of ['circle', 'heart', 'star']) assert.ok(page.includes(`/api?p=${pattern}&amp;url=https://github.com/ivgtr.png`));
   assert.match(page, /href="https:\/\/github.com\/ivgtr\/crop-icon"/);
   assert.doesNotMatch(page, /target="_brank"/);
@@ -86,4 +87,14 @@ test('Vercel and local serving do not depend on public files or a duplicate temp
   assert.deepEqual(config.builds.map((build: { src: string }) => build.src), ['api/index.ts']);
   assert.doesNotMatch(readFileSync('api/index.ts', 'utf8'), /readFileSync|process\.cwd|public\//);
   assert.doesNotMatch(readFileSync('scripts/dev.ts', 'utf8'), /readFile|core\.js|app\.js|public/);
+});
+
+test('the demo leads with results, with downloads and real shape samples nearby', () => {
+  const page = markup();
+  assert.ok(page.indexOf('class="preview-panel"') < page.indexOf('class="controls"'));
+  assert.ok(page.indexOf('id="download-png"') < page.indexOf('class="controls"'));
+  assert.equal([...page.matchAll(/data-shape-preview=/g)].length, PATTERNS.length);
+  assert.doesNotMatch(page, /class="intro"|class="badge"|>01<|>02<|>03</);
+  assert.match(page, /SVG keeps hidden pixels and metadata/);
+  assert.match(inlineStyles, /position: sticky/);
 });

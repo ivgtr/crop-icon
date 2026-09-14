@@ -26,7 +26,7 @@ Shapes: `circle` · `heart` · `star` · `square` · `rounded` · `squircle` · 
 | `width`, `height` | Whole pixels, 1–4096 | Each source dimension |
 | `fit` | `contain`, `cover` | `contain` |
 | `x`, `y` | Alignment, 0–100 | `50` |
-| `zoom` | Scale, 1–4 | `1` |
+| `zoom` | Scale, 0.1–4 | `1` |
 | `border` | Inside stroke, 0–64 px | `0` |
 | `color` | 3/6/8-digit hex | `ffffff` |
 | `bg` | Hex or `transparent` | `transparent` |

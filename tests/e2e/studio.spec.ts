@@ -106,7 +106,7 @@ test('invalid inputs disable export and a valid file recovers', async ({ page })
   await expect(page.locator('#privacy')).toContainText('valid.png');
 });
 
-test('default public GitHub image, live embeds and edit links work end to end without mocks', async ({ page, context, baseURL }) => {
+test('default public GitHub image, live embeds and edit links work end to end without mocks', async ({ page, context, baseURL }, info) => {
   const loads: string[] = [];
   page.on('request', request => {
     const url = new URL(request.url());
@@ -114,6 +114,10 @@ test('default public GitHub image, live embeds and edit links work end to end wi
   });
   await openStudio(page, true);
   expect(loads).toEqual(['https://github.com/ivgtr.png']);
+  await page.screenshot({ path: info.outputPath('public-source-en.png'), fullPage: true });
+  await page.locator('#language').selectOption('ja');
+  await page.screenshot({ path: info.outputPath('public-source-ja.png'), fullPage: true });
+  await page.locator('#language').selectOption('en');
   await expect(page.locator('#url')).toHaveValue('https://github.com/ivgtr.png');
   await expect(page.locator('#status')).toContainText('Ready.');
   await expect(page.locator('#copy-url')).toBeEnabled();
