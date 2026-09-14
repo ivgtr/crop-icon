@@ -26,6 +26,14 @@ async function download(page: Page, extension: 'svg' | 'png'): Promise<Buffer> {
   return readFile(path!);
 }
 
+async function waitForRenderedZoom(page: Page, zoom: string): Promise<string> {
+  await expect.poll(async () => {
+    const value = await page.locator('#embed').inputValue();
+    return value ? new URL(value).searchParams.get('zoom') : null;
+  }).toBe(zoom);
+  return page.locator('#embed').inputValue();
+}
+
 test('zoom-out uses shared limits in the editor, embed URL, edit link and PNG export', async ({ page, context }) => {
   await installImageRoute(context);
   await page.goto('/');
@@ -35,13 +43,12 @@ test('zoom-out uses shared limits in the editor, embed URL, edit link and PNG ex
   await expect(zoom).toHaveAttribute('min', String(MIN_ZOOM));
   await expect(zoom).toHaveAttribute('max', String(MAX_ZOOM));
   await zoom.fill('0.5');
+  const embed = await waitForRenderedZoom(page, '0.5');
   await expect(page.locator('#zoom-value')).toHaveText('0.5×');
 
   const svg = (await download(page, 'svg')).toString('utf8');
   expect(svg).toContain('x="128" y="192" width="256" height="128"');
 
-  const embed = await page.locator('#embed').inputValue();
-  expect(new URL(embed).searchParams.get('zoom')).toBe('0.5');
   const embeddedSvg = await page.evaluate(async url => (await fetch(url)).text(), embed);
   expect(embeddedSvg).toContain('x="128" y="192" width="256" height="128"');
 
@@ -52,6 +59,8 @@ test('zoom-out uses shared limits in the editor, embed URL, edit link and PNG ex
   const shared = await context.newPage();
   await shared.goto(editLink);
   await expect(shared.locator('#zoom')).toHaveValue('0.5');
+  await waitForRenderedZoom(shared, '0.5');
+  await expect(shared.locator('#download-svg')).toBeEnabled();
   const sharedSvg = (await download(shared, 'svg')).toString('utf8');
   expect(sharedSvg).toContain('x="128" y="192" width="256" height="128"');
 
