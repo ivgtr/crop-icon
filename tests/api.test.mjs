@@ -63,3 +63,66 @@ test('unsupported methods do not trigger network requests', () => withServer(asy
   const response = await fetch(base + '/api?url=https://example.com/a', { method: 'POST' });
   assert.equal(response.status, 405); assert.equal(response.headers.get('allow'), 'GET, HEAD');
 }, async () => assert.fail('POST reached network loader')));
+
+test('the editor ships one inline stylesheet and a matching CSP hash, without unsafe-inline', () => withServer(async base => {
+  const response = await fetch(base + '/api');
+  const html = await response.text();
+  const { createHash } = await import('node:crypto');
+  const blocks = [...html.matchAll(/<style id="studio-style">([\s\S]*?)<\/style>/g)];
+  assert.equal(blocks.length, 1);
+  assert.match(blocks[0][1], /@media/);
+  assert.doesNotMatch(html, /<link[^>]*rel=["']stylesheet["']/i);
+  const expected = createHash('sha256').update(blocks[0][1]).digest('base64');
+  const policy = response.headers.get('content-security-policy');
+  assert.ok(policy.includes(`style-src 'self' 'sha256-${expected}'`));
+  assert.ok(policy.includes("style-src-attr 'none'"));
+  assert.ok(policy.includes("script-src 'self'"));
+  assert.doesNotMatch(policy, /unsafe-inline|unsafe-eval/);
+}));
+
+test('editor entry points and HEAD responses share the same style policy and byte length', () => withServer(async base => {
+  const initial = await fetch(base + '/api');
+  const html = await initial.text();
+  const policy = initial.headers.get('content-security-policy');
+  for (const path of ['/', '/api', '/api/', '/index.html']) {
+    const response = await fetch(base + path);
+    assert.equal(response.status, 200);
+    assert.equal(await response.text(), html);
+    assert.equal(response.headers.get('content-security-policy'), policy);
+    const head = await fetch(base + path, { method: 'HEAD' });
+    assert.equal(head.status, 200);
+    assert.equal(await head.text(), '');
+    assert.equal(Number(head.headers.get('content-length')), Buffer.byteLength(html));
+    assert.equal(head.headers.get('content-security-policy'), policy);
+  }
+}));
+
+test('Vercel routes the editor aliases to the API that supplies its CSP', async () => {
+  const { readFile } = await import('node:fs/promises');
+  const config = JSON.parse(await readFile(new URL('../vercel.json', import.meta.url), 'utf8'));
+  assert.equal(config.outputDirectory, 'public');
+  assert.equal(config.functions['api/index.ts'].includeFiles, 'public/index.html');
+  for (const source of ['/', '/index.html']) {
+    assert.ok(config.rewrites.some(rule => rule.source === source && rule.destination === '/api'));
+  }
+});
+
+test('the editor references existing local modules, not a missing stylesheet', async () => {
+  const { readFile, access } = await import('node:fs/promises');
+  const html = await readFile(new URL('../public/index.html', import.meta.url), 'utf8');
+  assert.doesNotMatch(html, /\/style\.css/);
+  for (const [, path] of html.matchAll(/<script[^>]+src="(\/[^\"]+)"/g)) {
+    await access(new URL('../public' + path, import.meta.url));
+  }
+  const app = await readFile(new URL('../public/app.js', import.meta.url), 'utf8');
+  for (const [, path] of app.matchAll(/from ['"]\.\/([^'\"]+)['"]/g)) {
+    await access(new URL('../public/' + path, import.meta.url));
+  }
+});
+
+test('SVG responses retain their restrictive policy independently of the editor styles', () => withServer(async base => {
+  const response = await fetch(base + '/api?url=https://example.com/a');
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get('content-security-policy'), "default-src 'none'; img-src data:; sandbox");
+  assert.doesNotMatch(await response.text(), /studio-style/);
+}));

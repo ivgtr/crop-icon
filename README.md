@@ -97,7 +97,7 @@ npm test
 npm run check
 ```
 
-`npm run check` runs strict TypeScript/JSDoc checks on the API/shared core, the browser script syntax check, and 103 native Node tests. Tests cover the original API contract and geometry, all shapes, image format/EXIF handling, query validation, response headers, stream limits, DNS pinning, private-address rejection, redirects, timeouts and HTTP GET/HEAD/304 behavior. HTTP handler tests use a real local server with an injected image source; loader tests mock network IO while retaining the real validation policy.
+`npm run check` runs strict TypeScript/JSDoc checks on the API/shared core, the browser script syntax check, and native Node tests. Tests cover the original API contract and geometry, all shapes, image format/EXIF handling, query validation, response headers, stream limits, DNS pinning, private-address rejection, redirects, timeouts and HTTP GET/HEAD/304 behavior. HTTP handler tests use a real local server with an injected image source; loader tests mock network IO while retaining the real validation policy.
 
 CI runs these checks on Node 22 for PRs and pushes to `main`.
 
@@ -106,12 +106,15 @@ CI runs these checks on Node 22 for PRs and pushes to `main`.
 - `public/core.js`: platform-independent parser, shape definitions, URL serializer and SVG renderer; JSDoc checked by TypeScript. This is the exact same module imported by the browser and API.
 - `api/_lib/source.ts`: bounded remote image loading and image metadata inspection.
 - `api/index.ts`: backwards-compatible HTTP entry point, HTML shell and cache/error headers.
-- `public/index.html`, `style.css`, `app.js`: dependency-free editor and browser exports.
+- `public/index.html`: editor markup and its embedded `<style id="studio-style">`; no external CSS request.
+- `public/app.js`: dependency-free editing interactions and browser exports.
 - `scripts/dev.mjs`: a small local server; not a production application entry point.
 
 ### Vercel
 
-The project uses the Node 22 `/api` function and static files in `public/`. `vercel.json` specifies the build command, static output directory, function duration and HTML file inclusion. No secrets or environment variables are required.
+The project uses the Node 22 `/api` function and static files in `public/`. `vercel.json` specifies the build command, static output directory, function duration and HTML file inclusion. No secrets or environment variables are required. `/` and `/index.html` rewrite to the same `/api` editor response. Image requests to `/api?url=...` are unchanged.
+
+The editor has its complete responsive stylesheet in `public/index.html`. The API normalizes HTML line endings and computes a SHA-256 hash from that exact style block for the `Content-Security-Policy` header. Updating the stylesheet does not require a manually maintained hash or `unsafe-inline`. Arbitrary inline styles and inline scripts remain disallowed. The SVG response keeps its separate restrictive policy. Keep the `studio-style` ID when editing the template; HTTP tests verify the hash and the absence of missing local stylesheet references.
 
 Before merging a deployment, verify a clean `npm ci`, the preview build, the existing README embed, remote GitHub-avatar redirects, and SVG/PNG downloads in the target browsers. External fetching and the Vercel deployment were not exercised in the offline implementation environment.
 

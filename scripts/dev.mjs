@@ -2,11 +2,11 @@ import { createServer } from 'node:http';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import handler from '../build/api/index.js';
-const assets = new Map([['/app.js', 'text/javascript'], ['/core.js', 'text/javascript'], ['/style.css', 'text/css']]);
+const assets = new Map([['/app.js', 'text/javascript'], ['/core.js', 'text/javascript']]);
 const server = createServer(async (request, response) => {
   try {
     const path = new URL(request.url, 'http://localhost').pathname;
-    if (path === '/' || path === '/api' || path === '/api/') return await handler(request, response);
+    if (path === '/' || path === '/api' || path === '/api/' || path === '/index.html') return await handler(request, response);
     if (!assets.has(path)) { response.writeHead(404); return response.end(); }
     const content = await readFile(resolve('public', path.slice(1)));
     response.writeHead(200, { 'Content-Type': assets.get(path), 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' });

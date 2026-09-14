@@ -16,11 +16,16 @@ export function createHandler(load: (url: string) => Promise<Source> = loadRemot
     }
     const query = new URL(request.url ?? '/api', 'http://localhost').searchParams;
     if (query.getAll('url').length <= 1 && (!query.has('url') || query.get('url') === '')) {
-      const html = readFileSync(join(process.cwd(), 'public/index.html'));
+      // HTML parsers normalize line endings before CSP hashing. Serve those exact bytes.
+      const document = readFileSync(join(process.cwd(), 'public/index.html'), 'utf8').replace(/\r\n?/g, '\n');
+      const style = /<style id="studio-style">([\s\S]*?)<\/style>/.exec(document)?.[1];
+      if (!style) throw new Error('The editor stylesheet is missing.');
+      const styleHash = createHash('sha256').update(style).digest('base64');
+      const html = Buffer.from(document);
       response.writeHead(200, {
         'Content-Type': 'text/html; charset=utf-8', 'Content-Length': html.byteLength,
         'Cache-Control': 'no-cache', 'Referrer-Policy': 'no-referrer',
-        'Content-Security-Policy': "default-src 'none'; script-src 'self'; style-src 'self'; img-src 'self' data: blob:; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'",
+        'Content-Security-Policy': `default-src 'none'; script-src 'self'; style-src 'self' 'sha256-${styleHash}'; style-src-attr 'none'; img-src 'self' data: blob:; connect-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'`,
       });
       response.end(head ? undefined : html);
       return;

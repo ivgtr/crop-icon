@@ -4,7 +4,10 @@
   "buildCommand": "npm run build",
   "outputDirectory": "public",
   "functions": { "api/index.ts": { "maxDuration": 15, "includeFiles": "public/index.html" } },
-  "rewrites": [{ "source": "/", "destination": "/api" }],
+  "rewrites": [
+    { "source": "/", "destination": "/api" },
+    { "source": "/index.html", "destination": "/api" }
+  ],
   "headers": [{ "source": "/(.*)", "headers": [
     { "key": "X-Content-Type-Options", "value": "nosniff" },
     { "key": "Referrer-Policy", "value": "no-referrer" }
