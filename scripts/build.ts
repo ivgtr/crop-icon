@@ -1,4 +1,4 @@
-import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 
 // Invoked only after strict tsc checks and esbuild. Build artifacts are never public.
@@ -23,6 +23,3 @@ await mkdir(resolve(root, 'api/_lib/generated'), { recursive: true });
 await writeFile(resolve(root, 'api/_lib/generated/editor.ts'),
   '// Generated from api/_lib/editor/*.ts. Do not edit this build artifact.\n' +
   `export const inlineScript: string = ${JSON.stringify(script)};\n`);
-// Vercel's static output is deliberately empty. Only api/index.ts serves requests.
-await rm(resolve(root, 'build/static'), { recursive: true, force: true });
-await mkdir(resolve(root, 'build/static'), { recursive: true });

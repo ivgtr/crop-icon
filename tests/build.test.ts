@@ -68,15 +68,17 @@ test('module syntax checks ignore prose but reject actual module dependencies', 
   ]) assert.equal(hasModuleSyntax(code), true, code);
 });
 
-test('Vercel static output is empty and cannot expose compiled server modules', () => {
+test('Vercel builds only the TypeScript API function without a static builder', () => {
   const config = JSON.parse(readFileSync('vercel.json', 'utf8'));
-  assert.equal(config.outputDirectory, 'build/static');
-  assert.deepEqual(readdirSync(config.outputDirectory), []);
-  assert.equal(config.buildCommand, 'npm run build');
+  assert.deepEqual(config.builds, [{ src: 'api/index.ts', use: '@vercel/node', config: { maxDuration: 15 } }]);
+  assert.equal(config.outputDirectory, undefined);
+  assert.equal(config.functions, undefined);
+  assert.equal(config.buildCommand, undefined);
   const pkg = JSON.parse(readFileSync('package.json', 'utf8'));
   assert.equal(pkg.scripts['vercel-build'], 'npm run build');
-  assert.equal(config.functions['api/index.ts'].includeFiles, undefined);
-  for (const path of ['/', '/index.html']) assert.ok(config.rewrites.some((r: { source: string; destination: string }) => r.source === path && r.destination === '/api'));
+  for (const path of ['/', '/api', '/api/', '/index.html']) {
+    assert.ok(config.rewrites.some((r: { source: string; destination: string }) => r.source === path && r.destination === '/api/index.ts'));
+  }
 });
 
 // Include build/dev scripts and tests: moving only the runtime would leave unchecked JS.

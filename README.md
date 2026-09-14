@@ -77,7 +77,8 @@ npm run check
 ### One public entry point
 
 ```text
-api/index.ts                       # the only deployed HTTP entry point
+api/
+  index.ts                         # the only deployed HTTP entry point
   _lib/
     html.ts                        # original h()/s() HTML and inline styles
     core.ts                        # typed shapes, options and SVG rendering
@@ -89,7 +90,7 @@ api/index.ts                       # the only deployed HTTP entry point
     utils/{tag,style}.ts            # original composition helpers
     generated/editor.ts            # ignored build output, never hand-written
 scripts/{build,dev}.ts              # TypeScript build tools, not deployed routes
-tests/*.test.ts                    # TypeScript tests, compiled before execution
+tests/*.test.ts                     # TypeScript tests, compiled before execution
 ```
 
 There is **no public directory, hand-written .js/.mjs/.cjs source, static HTML template or public JavaScript asset endpoint**. Tests protect this boundary and the existing API contract.
@@ -100,7 +101,11 @@ The API hashes exactly the script and style strings it embeds for CSP. It does n
 
 ### Vercel
 
-Vercel builds and deploys `api/index.ts`. `/` and `/index.html` are aliases of that handler; `api/_lib` contains private TypeScript modules. `build/static` is explicitly empty so neither the project root nor compiled server files are published. `/app.js`, `/core.js` and source paths are not routes. No script-serving API is added. The development server delegates to the same handler and has no file-serving logic.
+`vercel.json` explicitly builds **only `api/index.ts` with `@vercel/node`**. It has no static builder or static output directory. The existing `/api` endpoint and the editor aliases rewrite to that single function. No browser asset endpoints or source-file routes are added. The development server delegates to the same handler and has no file-serving logic.
+
+The `vercel-build` hook runs the same `npm run build` pipeline before the Node function is traced, so the generated editor module exists when the handler is compiled. The ordinary API-folder builder does not execute a plain `build` script by itself. Do not replace this with an empty static output directory: Vercel's static builder rejects empty directories. No placeholder public files are needed.
+
+The explicit `builds` property is a supported legacy configuration chosen here to allowlist one function and prevent automatic static-file publishing. It must not be combined with `functions`. This tradeoff and the single-entry configuration are covered by tests.
 
 Restart npm run dev after source changes to rebuild. Before merging, verify Vercel preview, remote GitHub avatars, the original README embed, downloads and target browsers. Offline tests are not a substitute for deployment verification.
 

@@ -1,12 +1,14 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "version": 2,
-  "buildCommand": "npm run build",
-  "outputDirectory": "build/static",
-  "functions": { "api/index.ts": { "maxDuration": 15 } },
+  "builds": [
+    { "src": "api/index.ts", "use": "@vercel/node", "config": { "maxDuration": 15 } }
+  ],
   "rewrites": [
-    { "source": "/", "destination": "/api" },
-    { "source": "/index.html", "destination": "/api" }
+    { "source": "/", "destination": "/api/index.ts" },
+    { "source": "/api", "destination": "/api/index.ts" },
+    { "source": "/api/", "destination": "/api/index.ts" },
+    { "source": "/index.html", "destination": "/api/index.ts" }
   ],
   "headers": [{ "source": "/(.*)", "headers": [
     { "key": "X-Content-Type-Options", "value": "nosniff" },

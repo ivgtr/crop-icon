@@ -81,8 +81,9 @@ test('cropImage retains the image-generation responsibility and shared rendering
 test('Vercel and local serving do not depend on public files or a duplicate template', () => {
   assert.equal(existsSync('public'), false);
   const config = JSON.parse(readFileSync('vercel.json', 'utf8'));
-  assert.ok(config.rewrites.some((rule: { source: string; destination: string }) => rule.source === '/' && rule.destination === '/api'));
-  assert.equal(config.functions['api/index.ts'].includeFiles, undefined);
+  assert.ok(config.rewrites.some((rule: { source: string; destination: string }) => rule.source === '/' && rule.destination === '/api/index.ts'));
+  assert.equal(config.functions, undefined);
+  assert.deepEqual(config.builds.map((build: { src: string }) => build.src), ['api/index.ts']);
   assert.doesNotMatch(readFileSync('api/index.ts', 'utf8'), /readFileSync|process\.cwd|public\//);
   assert.doesNotMatch(readFileSync('scripts/dev.ts', 'utf8'), /readFile|core\.js|app\.js|public/);
 });
