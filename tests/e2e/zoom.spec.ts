@@ -39,7 +39,7 @@ test('zoom-out uses shared limits in the editor, embed URL, edit link and PNG ex
   await expect(zoom).toHaveAttribute('min', String(MIN_ZOOM));
   await expect(zoom).toHaveAttribute('max', String(MAX_ZOOM));
   await zoom.fill('0.5');
-  await expect(page.locator('#zoom-value')).toHaveValue('0.5×');
+  await expect(page.locator('#zoom-value')).toHaveText('0.5×');
 
   const svg = await previewSvg(page);
   expect(svg).toContain('x="128" y="192" width="256" height="128"');
