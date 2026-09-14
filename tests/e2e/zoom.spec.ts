@@ -71,7 +71,7 @@ test('zoom-out uses shared limits in the editor, embed URL, edit link and PNG ex
     context.drawImage(image, 0, 0);
     return [
       context.getImageData(256, 256, 1, 1).data[3],
-      context.getImageData(32, 32, 1, 1).data[3],
+      context.getImageData(256, 150, 1, 1).data[3],
     ];
   }, `data:image/png;base64,${png.toString('base64')}`);
   expect(alpha).toEqual([255, 0]);
