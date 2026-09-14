@@ -6,7 +6,7 @@
     "noUnusedLocals": true, "noUnusedParameters": true, "noImplicitReturns": true,
     "noFallthroughCasesInSwitch": true, "noEmitOnError": true,
     "forceConsistentCasingInFileNames": true, "skipLibCheck": true,
-    "lib": ["ES2022"], "types": ["node"]
+    "lib": ["ES2022"], "types": ["node"], "typeRoots": ["./node_modules/@types"]
   },
   "include": ["api/**/*.ts", "scripts/**/*.ts", "tests/*.ts"],
   "exclude": ["node_modules", "build", "api/_lib/editor"]

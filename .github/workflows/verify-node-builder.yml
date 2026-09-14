@@ -2,7 +2,7 @@ name: Node builder verification
 on:
   push:
     branches: [refactor/crop-icon-maintenance]
-    paths: [.github/workflows/verify-node-builder.yml]
+    paths: [.github/workflows/verify-node-builder.yml, tsconfig.json]
 permissions:
   contents: read
 jobs:
