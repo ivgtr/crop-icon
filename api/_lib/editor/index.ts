@@ -6,8 +6,10 @@ import { isLocale, translate, type MessageValues } from '../i18n.js';
 import type { MessageKey } from '../locales/en.js';
 import { localizeDocument, readLocale, saveLocale } from './i18n.js';
 import { elements } from './elements.js';
+import { ShapePreviews } from './shape-previews.js';
 
 const $ = <K extends keyof typeof elements>(id: K): (typeof elements)[K] => elements[id];
+const shapePreviews = new ShapePreviews($('shapes'));
 let locale = readLocale();
 const t = (key: MessageKey, values?: MessageValues): string => translate(locale, key, values);
 class EditorError extends Error {
@@ -48,6 +50,7 @@ function busy(value: boolean): void {
   $('preview-area').setAttribute('aria-busy', String(value));
   if (value) {
     source = null; remoteUrl = ''; svg = ''; sourceName = '';
+    shapePreviews.clear();
     $('original').removeAttribute('src'); $('result').removeAttribute('src');
     if (previewUrl) { URL.revokeObjectURL(previewUrl); previewUrl = ''; }
     setAvailable(false); $('embed').value = '';
@@ -86,6 +89,7 @@ function render(): void {
     $('dimensions').textContent = `${settings.width} × ${settings.height}`;
     $('embed').value = remoteUrl ? new URL('/api?' + toQuery(settings), location.origin).href : '';
     setAvailable(true);
+    shapePreviews.render(settings);
     if ($('status').classList.contains('error')) status('previewUpdated');
   } catch (error) {
     svg = '';
@@ -110,6 +114,7 @@ async function acceptSource(data: string, url: string, name: string, id: number)
   if (id !== requestId) return;
   if (!image.naturalWidth || !image.naturalHeight || image.naturalWidth > 16384 || image.naturalHeight > 16384 || image.naturalWidth * image.naturalHeight > MAX_PIXELS) throw new EditorError('imageTooLarge');
   source = { data, width: image.naturalWidth, height: image.naturalHeight };
+  shapePreviews.setSource(image);
   remoteUrl = url;
   sourceName = name;
   busy(false);
@@ -206,6 +211,9 @@ async function copy(text: string): Promise<void> {
   }
 }
 // html.ts renders the controls; this module progressively adds editor behavior.
+const usage = document.querySelector<HTMLDetailsElement>('#usage');
+document.querySelector('a[href="#usage"]')?.addEventListener('click', () => { if (usage) usage.open = true; });
+if (location.hash === '#usage' && usage) usage.open = true;
 $('language').value = locale;
 localizeDocument(locale);
 $('language').addEventListener('change', () => {
@@ -253,7 +261,7 @@ $('download-png').addEventListener('click', async () => {
     canvas.height = settings.height;
     const context = canvas.getContext('2d');
     if (!context) throw new EditorError('canvasError');
-    context.drawImage(image, 0, 0, canvas.width, canvas.height);
+    context.drawImage(image, 0, 0);
     const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png'));
     if (!blob) throw new EditorError('pngError');
     download(blob, 'png'); status('pngDownloaded');
